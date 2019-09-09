@@ -1,24 +1,36 @@
 * Get BitMex Data
-This is a small utility to download Bitmex historical data in 1m 5m or coarser binformat.
+This is a small utility for linux based systems to download Bitmex historical data in "1m", "5m" or coarser binSizes.
 
-It requires BitMex auth file that you can find here and a few other commonly used python modules.
-Just check the import section of getBitmexData.py and install the packages you are missing if any.
+It only requires some of [[https://github.com/BitMEX/api-connectors][BitMex api-connectors's files]] (that I cutomized in auth.py) and a few other commonly used python modules such /request/ and /pandas/.
+
+Please, just check the import section of [[https://github.com/maliky/getBitmexData][getBitmexData.py]] and install the packages you are missing, if any... and preferably in a virtual env.  I like [[https://github.com/pypa/pipenv][pipenv]]. :)
 
 ** Licence
-There is no licence.  You do what you want with the code.  Do check it before running it, it's only a few lines of blacked code.
+There is no licence.  You do what you want with the code.  It's only a few lines of [[https://github.com/psf/black][blacked]] code, so please DO CHECK it before running it. 
 
 ** Installation
-clone the repository and run
-#+BEGIN_SRC bash  -i
-python getBitmexData.py -h
+#+BEGIN_SRC bash  
+git clone git@github.com:maliky/getBitmexData.git
+cd getBitmexData
 #+END_SRC
 
-#+BEGIN_SRC bash  -i
+** Usage
+Just run the getBitmexData.py like this for exemple
+#+BEGIN_SRC bash -i 
+python getBitmexData.py --startTime "2019-08-01"
+#+END_SRC
+
+*** Help and other options
+  #+BEGIN_SRC bash  -i
+python getBitmexData.py -h
+  #+END_SRC
+
+  #+BEGIN_SRC bash  -i
 usage: getBitmexData.py [-h] [--fout FOUT] [--count COUNT] [--pause PAUSE]
                         [--binSize BINSIZE] [--startTime STARTTIME]
                         [--endTime ENDTIME] [--live] [--logLevel LOGLEVEL]
 
-An application to download bitmex's data with what ever resolution you need.
+An application to download bitmex s data with what ever resolution you need.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -37,4 +49,4 @@ optional arguments:
   --logLevel LOGLEVEL, -L LOGLEVEL
                         set the log level
 
-#+END_SRC
+  #+END_SRC
