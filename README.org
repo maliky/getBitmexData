@@ -3,7 +3,7 @@ This is a small utility for linux based systems to download Bitmex historical da
 
 It only requires some of [[https://github.com/BitMEX/api-connectors][BitMex api-connectors's files]] (that I cutomized in auth.py) and a few other commonly used python modules such /request/ and /pandas/.
 
-Please, just check the import section of [[https://github.com/psf/blackhttps://github.com/maliky/getBitmexData][getBitmexData.py]] and install the packages you are missing, if any... and preferably in a virtual env.  I like [[https://github.com/pypa/pipenv][pipenv]]. :)
+Please, just check the import section of [[https://github.com/maliky/getBitmexData/blob/master/getBitmexData.py][getBitmexData.py]] and install the packages you are missing, if any... and preferably in a virtual env.  I like [[https://github.com/pypa/pipenv][pipenv]]. :)
 
 ** Licence
 There is no licence.  You do what you want with the code.  It's only a few lines of [[https://github.com/psf/black][blacked]] code, so please DO CHECK it before running it. 
