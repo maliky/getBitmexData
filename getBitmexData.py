@@ -4,26 +4,43 @@ import pandas as pd
 from time import sleep
 import requests as rq
 import logging
-from auth import APIKeyAuthWithExpires
+import os
+import time
+try:
+    from auth import APIKeyAuthWithExpires
 
-# create a settings file with your IDs
-from settings import (
-    LIVE_KEY,
-    LIVE_SECRET,
-    LIVE_URL,
-    TEST_KEY,
-    TEST_SECRET,
-    TEST_URL,
-)
+    # create a settings file with your IDs
+    from settings import (
+        LIVE_KEY,
+        LIVE_SECRET,
+        LIVE_URL,
+        TEST_KEY,
+        TEST_SECRET,
+        TEST_URL,
+    )
+except ModuleNotFoundError:
+    from .auth import APIKeyAuthWithExpires
 
+    # create a settings file with your IDs
+    from .settings import (
+        LIVE_KEY,
+        LIVE_SECRET,
+        LIVE_URL,
+        TEST_KEY,
+        TEST_SECRET,
+        TEST_URL,
+    )
+
+os.environ["TZ"] = "UTC"
+time.tzset()
 
 # Duration converter
 TC = {"1m": "60s", "5m": "300s", "1h": "1H", "1d": "1D"}
 
 logger = logging.getLogger()
-STRF = "%Y-%m-%d %H:%M"  # default time format for saving the data
+STRF = "%Y-%m-%dT%H:%M"  # default time format for saving the data
 
-# switch between live and test
+# Converts bitmex time unit to pd.timestamp time units
 URLS = {
     True: (LIVE_URL, LIVE_KEY, LIVE_SECRET),
     False: (TEST_URL, TEST_KEY, TEST_SECRET),
@@ -40,11 +57,11 @@ def init_session(name="foo"):
     return sess
 
 
-def make_request(query, sess, auth):
-    """Make a `query` request  passed via REST in session `sess`"""
-    rep = None
+def make_request(query, sess, auth, url):
+    """Make the request with query been passed via rest in sessions sess"""
+    rep, req = None, None
     try:
-        req = rq.Request("GET", f"{URL}trade/bucketed", auth=auth, params=query)
+        req = rq.Request("GET", f"{url}trade/bucketed", auth=auth, params=query)
         prepp = sess.prepare_request(req)
         rep = sess.send(prepp, timeout=10)
         rep = rep.json()
@@ -54,20 +71,23 @@ def make_request(query, sess, auth):
         )
         logger.debug(logmsg)
     except Exception as e:
-        logger.exception(
-            f"#### ERROR ####\nReq: req={req}, url={req.url}, params={query}"
-            f"\nPrepp: header={prepp.headers}, url={prepp.path_url}"
-            f"\nRep: {rep}"
-        )
+        if req:
+            logmsg = (
+                f"#### ERROR ####\nReq: req={req}, url={req.url}, params={query}"
+                f"\nPrepp: header={prepp.headers}, url={prepp.path_url}"
+            )
+            logmsg += f"\nRep: {rep}"
+
+            logger.exception(logmsg)
         raise e
 
     return rep
 
 
 def get_time_window(rep, reverse=False):
-    """Return the first and last date from the response `rep` of a request response.  
-    if False (default), oldest date is first,
-    Returns a tuple of pd.Timestamp
+    """
+    Return first and last date of a request response.  With  reverse False (default), oldest date is first,
+    return a tuple of  pd.Timestamp
     """
     try:
         old = pd.Timestamp(rep[0]["timestamp"])
@@ -82,6 +102,7 @@ def get_time_window(rep, reverse=False):
 def get_bucketed_trades(
     apiKey,
     apiSecret,
+    url,
     Q=None,
     fout=None,
     startTime=None,
@@ -91,14 +112,14 @@ def get_bucketed_trades(
     reverse="false",
 ):
     """
-    Returns the historical data for XBTUSD (default) from `startTime` to `endTime` bucketed by `binSize` 
-    return columns are: timestamp, symbol,  open,  high,  low,  close,  trades,  volume,  vwap,  lastSize,  
+    Returns the historical data for XBTUSD (default) from `startTime` to `endTime` bucketed by `binSize`
+    return columns are: timestamp, symbol,  open,  high,  low,  close,  trades,  volume,  vwap,  lastSize,
     turnover,  homeNotional,  foreignNotional,
         - binSize (str) is one of 1m, 5m, 1h, 1d
         - Time are in isoformat eg. 2016-12-27T11:00Z
 
     Params:
-    apiKey, apiSecret, obvious
+    apiKey, apiSecret, url, obvious
     Q=None,  The Query requested passed as a dictionnary with keys binSize, partial, symbol, count and reverse.
     fout=None, the name of the file to write to
     pause=0.5, to throttle the request
@@ -131,10 +152,10 @@ def get_bucketed_trades(
     else:
         startTime = Q["startTime"]
 
-    # Ready to open the file, make the request and write the results
+    # Ready to open the file make requests and write results
     with open(fout, "w") as fd:
         Q, firstReqDate, lastReqDate = request_write_nlog(
-            Q, sess, auth, fd, header=True, pause=0
+            Q, sess, auth, url, fd, header=True, pause=0
         )
         logging.warning(
             f"Req 0: Q={Q}, {firstReqDate.strftime(STRF)}"
@@ -144,7 +165,7 @@ def get_bucketed_trades(
         i = 1
         while not reached(lastReqDate, endTime):
             Q, firstReqDate, lastReqDate = request_write_nlog(
-                Q, sess, auth, fd, step=i, startTime=lastReqDate, pause=pause
+                Q, sess, auth, url, fd, step=i, startTime=lastReqDate, pause=pause
             )
             print(
                 f"Req {i}: {firstReqDate.strftime(STRF)}"
@@ -161,9 +182,10 @@ def get_bucketed_trades(
 
 
 def request_write_nlog(
-    query, sess, auth, fd, header=False, pause=1, step=0, startTime=None
+    query, sess, auth, url, fd, header=False, pause=1, step=0, startTime=None
 ):
-    """Makes the requests and write the results in a fd"""
+    """Makes the requests and write the results in a fd file
+    returns the query and 2 timestamps"""
 
     logger.debug(f"Requesting {query}")
     # pause to avoid been rejected, below 1.2 s between requests, it can be rejected by server
@@ -173,16 +195,20 @@ def request_write_nlog(
     if startTime is not None:
         query["startTime"] = startTime
     try:
-        rep = make_request(query, sess, auth)
+        rep = make_request(query, sess, auth, url)
         firstReqDate, lastReqDate = get_time_window(rep)
     except (KeyError, IndexError):
-        # Then the server has probably no data for this request, we jump to next day
+        # Then we probably have no data for this request, we jump to next day
         firstReqDate = pd.Timestamp(query.get("startTime"))
         lastReqDate = pd.Timestamp(firstReqDate) + pd.Timedelta("1D")
         logmsg = (
             f"# Empty Response: Step={step}, {firstReqDate.strftime(STRF)}"
             f" --> {lastReqDate.strftime(STRF)}."
         )
+    except Exception:
+        logger.error(f"query={query}, auth={auth}, url={url}")
+        raise
+
     else:
         df = pd.DataFrame(rep).set_index("timestamp")
         df.to_csv(fd, header=header)
@@ -201,8 +227,10 @@ def reached(lastReqDate, endTime=None):
     """Returns True si endTime <= lastReqDate (end more recent than last)
     or if endTime is None"""
     # Check the tz settings
-    return endTime is None or pd.Timestamp(endTime, tz="UTC") <= pd.Timestamp(
-        lastReqDate, tz="UTC"
+    endTz = os.environ["TZ"] if endTime.tz is None else None
+    lastTz = os.environ["TZ"] if lastReqDate.tz is None else None
+    return endTime is None or pd.Timestamp(endTime, tz=endTz) <= pd.Timestamp(
+        lastReqDate, tz=lastTz
     )
 
 
@@ -210,8 +238,8 @@ def parse_args():
     """Settings the applications's arguments and options"""
 
     description = """An application to download bitmex's data with what ever resolution you need."""
-    fout_default = "./btxData.csv"
-    fout_help = "Name of the csv file where to save the results. (default btxData.csv)"
+    fout_default = "btxData"
+    fout_help = f"base Name of the csv file where to save the results. (default {fout_default}-freq-lastrecorddate.csv)"
     count_default = 600
     count_help = "Max number each of records in requests (default 600)"
     pause_default = 1.2
@@ -256,35 +284,34 @@ if __name__ == "__main__":
     timeUnit = TC[args.binSize]
     nUnit, tUnit = int(timeUnit[:-1]), timeUnit[-1]
 
+    # the oldest date I know off but 2015-09-26 for bitmex
+    # I have an issue with tz somewhere
+    startTime = (
+        pd.Timestamp("2016-05-05 04:00").round(timeUnit)
+        if args.startTime is None
+        else pd.Timestamp(args.startTime)
+    )
+    endTime = (
+        (pd.Timestamp.now() - pd.Timedelta(1, tUnit)).round(timeUnit)
+        if args.endTime is None
+        else pd.Timestamp(args.endTime)
+    )
     query = {
         "binSize": args.binSize,
-        "partial": "false",
-        "symbol": "XBTUSD",
         "count": args.count,
+        "partial": "false",
         "reverse": "false",
+        "symbol": "XBTUSD",
     }
-
-    if args.startTime is None:
-        # the oldest date I know off but 2015-09-26 for bitmex
-        # I have an issue with tz somewhere
-        startTime = pd.Timestamp("2016-05-05 04:00").round(timeUnit)
-    else:
-        startTime = pd.Timestamp(args.startTime)
-
-    if args.endTime is None:
-        endTime = (pd.Timestamp.now() - pd.Timedelta(1, tUnit)).round(timeUnit)
-    else:
-        endTime = pd.Timestamp(args.endTime)
-
     kwargs = {
-        "fout": args.fout,
-        "pause": args.pause,
-        "binSize": args.binSize,
-        "startTime": startTime,
         "endTime": endTime,
+        "fout": f"{args.fout}-{args.binSize}-{endTime.strftime('%Y%m%dT%H:%M')}.csv",
+        "pause": args.pause,
+        "startTime": startTime,
     }
 
     # use live or test ids
     URL, KEY, SECRET = URLS[args.live]
 
-    sess = get_bucketed_trades(KEY, SECRET, Q=query, **kwargs)
+    sess = get_bucketed_trades(KEY, SECRET, URL, Q=query, **kwargs)
+    
