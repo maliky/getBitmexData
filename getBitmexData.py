@@ -259,7 +259,6 @@ def parse_args():
     entryPoint_default = "/trade/bucketed"
     entryPoint_help = "Set the entry level.  the path to append to the LIVE or TEST url before the query"
 
-    
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--fout", "-f", help=fout_help, default=fout_default)
     parser.add_argument(
@@ -323,4 +322,3 @@ if __name__ == "__main__":
     URL, KEY, SECRET = URLS[args.live]
 
     sess = get_bucketed_trades(KEY, SECRET, f"{URL}{args.entryPoint}", Q=query, **kwargs)
-    
