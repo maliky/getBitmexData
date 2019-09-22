@@ -154,11 +154,10 @@ def get_bucketed_trades(
     else:
         startTime = Q["startTime"]
 
-    buckURL = f"{url}/trade/bucketed"
     # Ready to open the file make requests and write results
     with open(fout, "w") as fd:
         Q, firstReqDate, lastReqDate = request_write_nlog(
-            Q, sess, auth, buckURL, fd, header=True, pause=0
+            Q, sess, auth, url, fd, header=True, pause=0
         )
         logging.warning(
             f"Req 0: Q={Q}, {firstReqDate.strftime(STRF)}"
@@ -168,7 +167,7 @@ def get_bucketed_trades(
         i = 1
         while not reached(lastReqDate, endTime):
             Q, firstReqDate, lastReqDate = request_write_nlog(
-                Q, sess, auth, buckURL, fd, step=i, startTime=lastReqDate, pause=pause
+                Q, sess, auth, url, fd, step=i, startTime=lastReqDate, pause=pause
             )
             print(
                 f"Req {i}: {firstReqDate.strftime(STRF)}"
@@ -256,7 +255,7 @@ def parse_args():
     logLevel_default = "WARNING"
     logLevel_help = "set the log level"
     live_help = "If present use LIVE keys to get the data else use the test site."
-    entryPoint_default = "/trade/bucketed"
+    entryPoint_default = "trade/bucketed"
     entryPoint_help = "Set the entry level.  the path to append to the LIVE or TEST url before the query"
 
     parser = argparse.ArgumentParser(description=description)
