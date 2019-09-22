@@ -57,11 +57,13 @@ def init_session(name="foo"):
     return sess
 
 
-def make_request(query, sess, auth, url):
-    """Make the request with query been passed via rest in sessions sess"""
+def make_request(query, sess, auth, url, verb='GET'):
+    """Make the request with query been passed via rest in sessions sess.  
+     request verb  (default GET)"""
     rep, req = None, None
     try:
-        req = rq.Request("GET", f"{url}trade/bucketed", auth=auth, params=query)
+        req = rq.Request(verb, f"{url}", auth=auth, params=query)
+        print(req.url, query)
         prepp = sess.prepare_request(req)
         rep = sess.send(prepp, timeout=10)
         rep = rep.json()
@@ -152,10 +154,11 @@ def get_bucketed_trades(
     else:
         startTime = Q["startTime"]
 
+    buckURL = f"{url}/trade/bucketed"
     # Ready to open the file make requests and write results
     with open(fout, "w") as fd:
         Q, firstReqDate, lastReqDate = request_write_nlog(
-            Q, sess, auth, url, fd, header=True, pause=0
+            Q, sess, auth, buckURL, fd, header=True, pause=0
         )
         logging.warning(
             f"Req 0: Q={Q}, {firstReqDate.strftime(STRF)}"
@@ -165,7 +168,7 @@ def get_bucketed_trades(
         i = 1
         while not reached(lastReqDate, endTime):
             Q, firstReqDate, lastReqDate = request_write_nlog(
-                Q, sess, auth, url, fd, step=i, startTime=lastReqDate, pause=pause
+                Q, sess, auth, buckURL, fd, step=i, startTime=lastReqDate, pause=pause
             )
             print(
                 f"Req {i}: {firstReqDate.strftime(STRF)}"
@@ -253,7 +256,10 @@ def parse_args():
     logLevel_default = "WARNING"
     logLevel_help = "set the log level"
     live_help = "If present use LIVE keys to get the data else use the test site."
+    entryPoint_default = "/trade/bucketed"
+    entryPoint_help = "Set the entry level.  the path to append to the LIVE or TEST url before the query"
 
+    
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--fout", "-f", help=fout_help, default=fout_default)
     parser.add_argument(
@@ -270,6 +276,9 @@ def parse_args():
     parser.add_argument("--live", "-l", action="store_true", help=live_help)
     parser.add_argument(
         "--logLevel", "-L", help=logLevel_help, default=logLevel_default
+    )
+    parser.add_argument(
+        "--entryPoint", "-E", help=entryPoint_help, default=entryPoint_default
     )
 
     return parser.parse_args()
@@ -313,5 +322,5 @@ if __name__ == "__main__":
     # use live or test ids
     URL, KEY, SECRET = URLS[args.live]
 
-    sess = get_bucketed_trades(KEY, SECRET, URL, Q=query, **kwargs)
+    sess = get_bucketed_trades(KEY, SECRET, f"{URL}{args.entryPoint}", Q=query, **kwargs)
     
