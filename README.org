@@ -1,5 +1,5 @@
 * Get BitMex Data
-This is a small utility for linux based systems to download Bitmex historical data in "1m", "5m" or coarser binSizes.
+This is a small utility for linux based systems to download or update Bitmex historical data in "1m", "5m" or coarser binSizes.
 
 It only requires some of [[https://github.com/BitMEX/api-connectors][BitMex api-connectors's files]] (that I cutomized in auth.py) and a few other commonly used python modules such /request/ and /pandas/.
 
@@ -18,6 +18,12 @@ cd getBitmexData
 Just run the getBitmexData.py like this for exemple
 #+BEGIN_SRC bash -i 
 python getBitmexData.py --startTime "2019-08-01"
+#+END_SRC
+
+Or update an existing file previously downloaded with getBitmexData.py (columns of csv file should be the same). It will get the time from the last saved record in the file and the bin size from the file name and continue from there. 
+
+#+BEGIN_SRC bash -i 
+python update_date.py yourBitmexDataFile-1d.csv
 #+END_SRC
 
 *** Help and other options
