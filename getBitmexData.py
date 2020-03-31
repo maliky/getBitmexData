@@ -300,8 +300,14 @@ if __name__ == "__main__":
 
     # the oldest date I know off but 2015-09-26 for bitmex
     # I have an issue with tz somewhere
+
+    defStartDate = {
+        "XBTUSD": "2016-05-05 04:00",
+        "ADAM20": "2019-01-01 04:00"
+    }
+    
     startTime = (
-        pd.Timestamp("2016-05-05 04:00").round(timeUnit)
+        pd.Timestamp(defStartDate[args.symbol]).round(timeUnit)
         if args.startTime is None
         else pd.Timestamp(args.startTime)
     )
