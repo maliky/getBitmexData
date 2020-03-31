@@ -112,6 +112,7 @@ def get_bucketed_trades(
     binSize="1d",
     pause=0.5,
     reverse="false",
+    symbol="XBTUSD"
 ):
     """
     Returns the historical data for XBTUSD (default) from `startTime` to `endTime` bucketed by `binSize`
@@ -141,7 +142,7 @@ def get_bucketed_trades(
         {
             "binSize": binSize,
             "partial": "false",
-            "symbol": "XBTUSD",
+            "symbol": symbol,
             "count": 180,
             "reverse": reverse,
         }
@@ -257,7 +258,9 @@ def parse_args():
     live_help = "If present use LIVE keys to get the data else use the test site."
     entryPoint_default = "trade/bucketed"
     entryPoint_help = "Set the entry level.  the path to append to the LIVE or TEST url before the query"
-
+    symbol_help = "Set the symbol for which to get historical data def. XBTUSD.  default start date may change depending on symbol"
+    symbol_default = "XBTUSD"
+    
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--fout", "-f", help=fout_help, default=fout_default)
     parser.add_argument(
@@ -277,6 +280,10 @@ def parse_args():
     )
     parser.add_argument(
         "--entryPoint", "-E", help=entryPoint_help, default=entryPoint_default
+    )
+
+    parser.add_argument(
+        "--symbol", "-S", help=symbol_help, default=symbol_default
     )
 
     return parser.parse_args()
@@ -308,7 +315,7 @@ if __name__ == "__main__":
         "count": args.count,
         "partial": "false",
         "reverse": "false",
-        "symbol": "XBTUSD",
+        "symbol": args.symbol,
     }
     kwargs = {
         "endTime": endTime,

@@ -15,13 +15,14 @@ import logging
 from kola.utils.datefunc import TC  # time conversion
 import os
 import time
+
 try:
     import getBitmexData.utils as u
     from getBitmexData.getBitmexData import get_bucketed_trades
 except ModuleNotFoundError:
     import utils as u
     from getBitmexData import get_bucketed_trades
-    
+
 
 os.environ["TZ"] = "UTC"
 time.tzset()
@@ -140,14 +141,13 @@ def update_name(fname):
     baseName = get_fname_basename(fname)
     newName = f"{baseName}-{binSize}-{newDate}.csv"
     simpName = f"{baseName}-{binSize}-{simpDate}.csv"
-    logger.warning(f'Renaming {fname} -> {newName}\n'
-                   f'Updating link {simpName}')
+    logger.warning(f"Renaming {fname} -> {newName}\n" f"Updating link {simpName}")
     os.rename(fname, newName)
     try:
         os.remove(simpName)
     except FileNotFoundError:
         pass
-    
+
     os.symlink(newName, simpName)
 
     return
@@ -212,6 +212,7 @@ if __name__ == "__main__":
     logger = logging.getLogger(args.logLevel)
 
     if args.fname is None:
+
         def fcond(f):
             return u.fcond(f, pat=r"btxData.*csv$")
 
@@ -219,5 +220,5 @@ if __name__ == "__main__":
     else:
         fname = args.fname
 
-    logger.warning(f'Running {args.live} with {fname}')
+    logger.warning(f"Running {args.live} with {fname}")
     main(fname, args.live)
