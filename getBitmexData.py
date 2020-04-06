@@ -206,7 +206,7 @@ def request_write_nlog(
         lastReqDate = pd.Timestamp(firstReqDate) + pd.Timedelta("1D")
         logmsg = (
             f"# Empty Response: Step={step}, {firstReqDate.strftime(STRF)}"
-            f" --> {lastReqDate.strftime(STRF)}."
+            f" --> {lastReqDate.strftime(STRF)}.\n"
         )
     except Exception:
         logger.error(f"query={query}, auth={auth}, url={url}")
@@ -217,7 +217,7 @@ def request_write_nlog(
         df.to_csv(fd, header=header)
         logmsg = (
             f"# Step={step}, {firstReqDate.strftime(STRF)}"
-            f" --> {lastReqDate.strftime(STRF)}."
+            f" --> {lastReqDate.strftime(STRF)}.\n"
         )
 
     fd.write(logmsg)
