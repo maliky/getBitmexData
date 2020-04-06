@@ -6,6 +6,7 @@ import requests as rq
 import logging
 import os
 import time
+
 try:
     from auth import APIKeyAuthWithExpires
 
@@ -57,7 +58,7 @@ def init_session(name="foo"):
     return sess
 
 
-def make_request(query, sess, auth, url, verb='GET'):
+def make_request(query, sess, auth, url, verb="GET"):
     """Make the request with query been passed via rest in sessions sess.  
      request verb  (default GET)"""
     rep, req = None, None
@@ -112,7 +113,7 @@ def get_bucketed_trades(
     binSize="1d",
     pause=0.5,
     reverse="false",
-    symbol="XBTUSD"
+    symbol="XBTUSD",
 ):
     """
     Returns the historical data for XBTUSD (default) from `startTime` to `endTime` bucketed by `binSize`
@@ -137,7 +138,11 @@ def get_bucketed_trades(
     # Init session and defaults settings
     auth = APIKeyAuthWithExpires(apiKey, apiSecret)
     sess = init_session()
-    fout = "./btxData.csv" if fout is None else fout
+    fout = (
+        "./btxData-{binSize}-{endTime.strftime('%Y%m%dT%H:%M')}.csv"
+        if fout is None
+        else fout
+    )
     Q = (
         {
             "binSize": binSize,
@@ -260,7 +265,7 @@ def parse_args():
     entryPoint_help = "Set the entry level.  the path to append to the LIVE or TEST url before the query"
     symbol_help = "Set the symbol for which to get historical data def. XBTUSD.  default start date may change depending on symbol"
     symbol_default = "XBTUSD"
-    
+
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--fout", "-f", help=fout_help, default=fout_default)
     parser.add_argument(
@@ -282,9 +287,7 @@ def parse_args():
         "--entryPoint", "-E", help=entryPoint_help, default=entryPoint_default
     )
 
-    parser.add_argument(
-        "--symbol", "-S", help=symbol_help, default=symbol_default
-    )
+    parser.add_argument("--symbol", "-S", help=symbol_help, default=symbol_default)
 
     return parser.parse_args()
 
@@ -301,11 +304,8 @@ if __name__ == "__main__":
     # the oldest date I know off but 2015-09-26 for bitmex
     # I have an issue with tz somewhere
 
-    defStartDate = {
-        "XBTUSD": "2016-05-05 04:00",
-        "ADAM20": "2019-01-01 04:00"
-    }
-    
+    defStartDate = {"XBTUSD": "2016-05-05 04:00", "ADAM20": "2019-01-01 04:00"}
+
     startTime = (
         pd.Timestamp(defStartDate[args.symbol]).round(timeUnit)
         if args.startTime is None
@@ -325,7 +325,7 @@ if __name__ == "__main__":
     }
     kwargs = {
         "endTime": endTime,
-        "fout": f"{args.fout}-{args.binSize}-{endTime.strftime('%Y%m%dT%H:%M')}.csv",
+        "fout": f"{args.fout}",
         "pause": args.pause,
         "startTime": startTime,
     }
@@ -333,4 +333,6 @@ if __name__ == "__main__":
     # use live or test ids
     URL, KEY, SECRET = URLS[args.live]
 
-    sess = get_bucketed_trades(KEY, SECRET, f"{URL}{args.entryPoint}", Q=query, **kwargs)
+    sess = get_bucketed_trades(
+        KEY, SECRET, f"{URL}{args.entryPoint}", Q=query, **kwargs
+    )
