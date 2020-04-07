@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import pandas as pd
-from time import sleep
-import requests as rq
 
+from time import sleep
 import os
 import time
+
+import requests as rq
+import pandas as pd
 
 try:
     from auth import APIKeyAuthWithExpires

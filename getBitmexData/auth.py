@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from requests.auth import AuthBase
-from urllib.parse import urlparse
 
 import hashlib
 import hmac
 import time
+from urllib.parse import urlparse
+
+from requests.auth import AuthBase
 
 # ###  Regroupe les fonctions et classe liées  à l'authentification####
 

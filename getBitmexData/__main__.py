@@ -16,6 +16,7 @@ from settings import (
     TEST_URL,
 )
 from getBitmexData import get_bucketed_trades
+import getBitmexData
 
 # Converts bitmex time unit to pd.timestamp time units
 
@@ -42,7 +43,7 @@ def read_settings():
 
 def parse_args():
     """Parse the applications's arguments and options."""
-    description = """An application to download bitmex's data with what ever resolution you need."""
+    description = getBitmexData.__description__
     fout_default = "btxData"
     fout_help = (
         f"base Name of the csv file where to save the results."
@@ -153,7 +154,6 @@ def main():
     sess = get_bucketed_trades(
         KEY, SECRET, f"{URL}{args.entryPoint}", Q=query, **kwargs
     )
-
 
 if __name__ == "__main__":
     main()
