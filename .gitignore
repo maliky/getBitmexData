@@ -1,0 +1,6 @@
+__pycache__
+settings.cfg
+*cache
+
+dist/
+*egg-info/
