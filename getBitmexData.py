@@ -274,9 +274,9 @@ def parse_args():
     parser.add_argument(
         "--pause", "-p", type=float, help=pause_help, default=pause_default
     )
-    parser.add_argument("--binSize", "-s", help=binSize_help, default=binSize_default)
+    parser.add_argument("--binSize", "-b", help=binSize_help, default=binSize_default)
     parser.add_argument(
-        "--startTime", "-t", help=startTime_help, default=startTime_default
+        "--startTime", "-s", help=startTime_help, default=startTime_default
     )
     parser.add_argument("--endTime", "-e", help=endTime_help, default=endTime_default)
     parser.add_argument("--live", "-l", action="store_true", help=live_help)
