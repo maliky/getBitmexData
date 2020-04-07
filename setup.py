@@ -27,6 +27,6 @@ setup(
     ],
     pacakges=find_packages(exclude=("Tests",)),  # ou packages=["getBitmexData"],
     include_package_data=True,
-    install_requires=["pandas", "request"],
+    install_requires=["pandas", "requests"],
     entry_points={"console_scripts": ["getBitmexData=getBitmexData.__main__:main",]},
 )

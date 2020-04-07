@@ -2,21 +2,14 @@
 """Module getting bitMEX's historical data."""
 import argparse
 import logging
-
 from configparser import ConfigParser
 from importlib import resources
 
 from pandas import Timestamp, Timedelta
-from settings import (
-    LIVE_KEY,
-    LIVE_SECRET,
-    LIVE_URL,
-    TEST_KEY,
-    TEST_SECRET,
-    TEST_URL,
-)
-from getBitmexData import get_bucketed_trades
+
 import getBitmexData
+from .getBitmexData import get_bucketed_trades
+
 
 # Converts bitmex time unit to pd.timestamp time units
 
@@ -28,15 +21,15 @@ TC = {"1m": "60s", "5m": "300s", "1h": "1H", "1d": "1D"}
 
 
 def read_settings():
-    """load the settings.cfg file"""
+    """Load the settings.cfg file."""
     _cfg = ConfigParser()
     _cfg.read_string(resources.read_text("getBitmexData", "settings.cfg"))
 
     rep = {}
 
     for label in ["URL", "KEY", "SECRET"]:
-        rep[True] = _cfg.get("getBitmexData", f"LIVE_{label}")
-        rep[False] = _cfg.get("getBitmexData", f"TEST_{label}")
+        rep[True] = rep.get(True, []) + [_cfg.get("getBitmexData", f"LIVE_{label}")]
+        rep[False] = rep.get(False, []) + [_cfg.get("getBitmexData", f"TEST_{label}")]
 
     return rep
 
@@ -112,12 +105,13 @@ def parse_args():
 
 
 def main():
+    """Run the getBitmexData."""
     args = parse_args()
 
     logger.setLevel(args.logLevel)
 
     timeUnit = TC[args.binSize]
-    nUnit, tUnit = int(timeUnit[:-1]), timeUnit[-1]
+    _, tUnit = int(timeUnit[:-1]), timeUnit[-1]
 
     # the oldest date I know off but 2015-09-26 for bitmex
     # I have an issue with tz somewhere
@@ -151,9 +145,8 @@ def main():
     # use live or test ids
     URL, KEY, SECRET = read_settings()[args.live]
 
-    sess = get_bucketed_trades(
-        KEY, SECRET, f"{URL}{args.entryPoint}", Q=query, **kwargs
-    )
+    _ = get_bucketed_trades(KEY, SECRET, f"{URL}{args.entryPoint}", Q=query, **kwargs)
+
 
 if __name__ == "__main__":
     main()

@@ -1,44 +1,26 @@
 # -*- coding: utf-8 -*-
-
-
+"""Download Bitmex historical data with different time resolution."""
 from time import sleep
 import os
 import time
+import logging
 
 import requests as rq
 import pandas as pd
+from .auth import APIKeyAuthWithExpires
 
-try:
-    from auth import APIKeyAuthWithExpires
-
-    # create a settings file with your IDs
-    from settings import (
-        LIVE_KEY,
-        LIVE_SECRET,
-        LIVE_URL,
-        TEST_KEY,
-        TEST_SECRET,
-        TEST_URL,
-    )
-except ModuleNotFoundError:
-    from .auth import APIKeyAuthWithExpires
-
-    # create a settings file with your IDs
-    from .settings import (
-        LIVE_KEY,
-        LIVE_SECRET,
-        LIVE_URL,
-        TEST_KEY,
-        TEST_SECRET,
-        TEST_URL,
-    )
+# Duration converter
+TC = {"1m": "60s", "5m": "300s", "1h": "1H", "1d": "1D"}
 
 os.environ["TZ"] = "UTC"
 time.tzset()
 
-def init_session(name="foo"):
-    """Set a session with name `foo`"""
+logger = logging.getLogger()
+STRF = "%Y-%m-%dT%H:%M"  # default time format for saving the data
 
+
+def init_session(name="foo"):
+    """Set a session with name `foo`."""
     sess = rq.Session()
     sess.headers.update({"user-agent": f"{name}-"})
     sess.headers.update({"content-type": "application/json"})
@@ -47,8 +29,11 @@ def init_session(name="foo"):
 
 
 def make_request(query, sess, auth, url, verb="GET"):
-    """Make the request with query been passed via rest in sessions sess.  
-     request verb  (default GET)"""
+    """
+    Request the query via rest with sessions sess.
+
+    -verb:  (default GET)
+    """
     rep, req = None, None
     try:
         req = rq.Request(verb, f"{url}", auth=auth, params=query)
@@ -58,7 +43,8 @@ def make_request(query, sess, auth, url, verb="GET"):
         rep = rep.json()
         logmsg = (
             f"Req: {req}, url={req.url}, parms={query}, auth={auth}"
-            f"Prepp: {prepp}: body={prepp.body}, header={prepp.headers}, url={prepp.path_url}"
+            f"Prepp: {prepp}: body={prepp.body}, header={prepp.headers}, "
+            f"url={prepp.path_url}"
         )
         logger.debug(logmsg)
     except Exception as e:
@@ -77,8 +63,10 @@ def make_request(query, sess, auth, url, verb="GET"):
 
 def get_time_window(rep, reverse=False):
     """
-    Return first and last date of a request response.  With  reverse False (default), oldest date is first,
-    return a tuple of  pd.Timestamp
+    Return first and last date of a request response.
+
+    - reverse: False (default), oldest date is first,
+    Return a tuple of  pd.Timestamp
     """
     try:
         old = pd.Timestamp(rep[0]["timestamp"])
@@ -104,20 +92,23 @@ def get_bucketed_trades(
     symbol="XBTUSD",
 ):
     """
-    Returns the historical data for XBTUSD (default) from `startTime` to `endTime` bucketed by `binSize`
-    return columns are: timestamp, symbol,  open,  high,  low,  close,  trades,  volume,  vwap,  lastSize,
+    Return the historical data for XBTUSD (default).
+
+    from `startTime` to `endTime` bucketed by `binSize`
+    return columns are: timestamp, symbol,  open,  high,  low,  close,
+    trades,  volume,  vwap,  lastSize,
     turnover,  homeNotional,  foreignNotional,
         - binSize (str) is one of 1m, 5m, 1h, 1d
         - Time are in isoformat eg. 2016-12-27T11:00Z
 
     Params:
     apiKey, apiSecret, url, obvious
-    Q=None,  The Query requested passed as a dictionnary with keys binSize, partial, symbol, count and reverse.
+    Q=None,  The Query requested passed as a dictionnary with keys binSize,
+    partial, symbol, count and reverse.
     fout=None, the name of the file to write to
     pause=0.5, to throttle the request
     reverse="false",
-"""
-
+    """
     logger.debug(
         f"Got {Q}, fout={fout}, startTime={startTime}, endTime={endTime},"
         f" binSize={binSize}, pause={pause}"
@@ -180,12 +171,14 @@ def get_bucketed_trades(
 def request_write_nlog(
     query, sess, auth, url, fd, header=False, pause=1, step=0, startTime=None
 ):
-    """Makes the requests and write the results in a fd file
-    returns the query and 2 timestamps"""
+    """
+    Make the requests and write the results in a fd file.
 
+    returns the query and 2 timestamps
+    """
     logger.debug(f"Requesting {query}")
-    # pause to avoid been rejected, below 1.2 s between requests, it can be rejected by server
-    # after a few tens of requests.
+    # pause to avoid been rejected, below 1.2 s between requests,
+    # it can be rejected by server after a few tens of requests.
     sleep(pause)
 
     if startTime is not None:
@@ -220,15 +213,14 @@ def request_write_nlog(
 
 
 def reached(lastReqDate, endTime=None):
-    """Returns True si endTime <= lastReqDate (end more recent than last)
-    or if endTime is None"""
+    """
+    Return True si endTime <= lastReqDate.
+
+    (end more recent than last) or if endTime is None
+    """
     # Check the tz settings
     endTz = os.environ["TZ"] if endTime.tz is None else None
     lastTz = os.environ["TZ"] if lastReqDate.tz is None else None
     return endTime is None or pd.Timestamp(endTime, tz=endTz) <= pd.Timestamp(
         lastReqDate, tz=lastTz
     )
-
-
-
-
