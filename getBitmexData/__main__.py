@@ -2,6 +2,10 @@
 """Module getting bitMEX's historical data."""
 import argparse
 import logging
+
+from configparser import ConfigParser
+from importlib import resources
+
 from pandas import Timestamp, Timedelta
 from settings import (
     LIVE_KEY,
@@ -13,6 +17,8 @@ from settings import (
 )
 from getBitmexData import get_bucketed_trades
 
+# Converts bitmex time unit to pd.timestamp time units
+
 logger = logging.getLogger()
 STRF = "%Y-%m-%dT%H:%M"  # default time format for saving the data
 
@@ -20,11 +26,18 @@ STRF = "%Y-%m-%dT%H:%M"  # default time format for saving the data
 TC = {"1m": "60s", "5m": "300s", "1h": "1H", "1d": "1D"}
 
 
-# Converts bitmex time unit to pd.timestamp time units
-URLS = {
-    True: (LIVE_URL, LIVE_KEY, LIVE_SECRET),
-    False: (TEST_URL, TEST_KEY, TEST_SECRET),
-}
+def read_settings():
+
+    _cfg = ConfigParser()
+    _cfg.read_string(resources.read_text("getBitmexData", "settings.cfg"))
+
+    rep = {}
+
+    for label in ["URL", "KEY", "SECRET"]:
+        rep[True] = _cfg.get("getBitmexData", f"LIVE_{label}")
+        rep[False] = _cfg.get("getBitmexData", f"TEST_{label}")
+
+    return rep
 
 
 def parse_args():
@@ -97,8 +110,7 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
-
+def main():
     args = parse_args()
 
     logger.setLevel(args.logLevel)
@@ -136,8 +148,12 @@ if __name__ == "__main__":
     }
 
     # use live or test ids
-    URL, KEY, SECRET = URLS[args.live]
+    URL, KEY, SECRET = read_settings()[args.live]
 
     sess = get_bucketed_trades(
         KEY, SECRET, f"{URL}{args.entryPoint}", Q=query, **kwargs
     )
+
+
+if __name__ == "__main__":
+    main()
