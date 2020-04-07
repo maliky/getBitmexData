@@ -28,7 +28,7 @@ TC = {"1m": "60s", "5m": "300s", "1h": "1H", "1d": "1D"}
 
 
 def read_settings():
-
+    """load the settings.cfg file"""
     _cfg = ConfigParser()
     _cfg.read_string(resources.read_text("getBitmexData", "settings.cfg"))
 
