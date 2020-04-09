@@ -2,7 +2,7 @@
 """ Fichier avec des fonctions pour récupérer les données historique de BitMex en ligne """
 import argparse
 import subprocess as sp
-import pandas as pd
+from pandas import Timestamp, Timedelta
 from kola.settings import (
     LIVE_KEY,
     LIVE_SECRET,
@@ -32,17 +32,16 @@ time.tzset()
 logger = logging.getLogger()
 STRF = "%Y-%m-%d %H:%M"  # default time format
 
-# Converts bitmex time unit to pd.timestamp time units
+# Converts bitmex time unit to timestamp time units
 URLS = {
     True: (LIVE_URL, LIVE_KEY, LIVE_SECRET),
     False: (TEST_URL, TEST_KEY, TEST_SECRET),
 }
 
 
-def get_last_record(fullname):
-    """ Renvois le dernier enregistrement d'un fichier btxData with fullname"""
-
-    # on récupère les dernières lignes du fichiers
+def get_last_record(fullname: str) -> str:
+    """Renvois le dernier enregistrement d'un fichier btxData with fullname."""
+    # on récupère les dernières lignes du fichier
     _lrs = sp.run(f"tail {fullname}".split(), stdout=sp.PIPE).stdout.split(b"\n")
 
     # on les filtres
@@ -55,34 +54,36 @@ def get_last_record(fullname):
     return lastRecords[-1]
 
 
-def get_record_date(record):
+def get_record_date(record) -> Timestamp:
     """
+    Get the Timestamp from the record row.
+
     Keyword Arguments:
     record -- un enregistrement valid de données historique de bitmex binned en 1m
-
-    Returns: a pd.Timestamp avec la date la plus de l'enregistrement record
     """
-    return pd.Timestamp(record.split(",")[0])
+    return Timestamp(record.split(",")[0])
 
 
-def get_recent_record_file_date(fullname):
+def get_recent_record_file_date(fullname: str) -> Timestamp:
     """
+    Get the most recent record date from fullname.
+
     Keyword Arguments:
     fullname -- nom du fichier
-
-    Returns: Renvois la date du plus récent enregistrement de fullname
     """
     return get_record_date(get_last_record(fullname))
 
 
-def get_recent_data(fromdate, binsize="1m", fout="tmp.csv", live=False):
+def get_recent_data(
+    fromdate: Timestamp, binsize: str = "1m", fout: str = "tmp.csv", live: bool = False
+):
     """
+    Load Bitmex's data fromdate in binsize and save them in fout.
+
     Keyword Arguments:
     fromdate -- date à laquelle commencer le téléchargement
     fout     --  fichier de sortie
     live  -- use live or test keys
-
-    Returns: Télécharge les données Bitmex par minutes et les stock dans fout
     """
     # {"1m": "60s", "5m": "300s", "1h": "1H", "1d": "1D"}
     binSize = binsize
@@ -90,13 +91,14 @@ def get_recent_data(fromdate, binsize="1m", fout="tmp.csv", live=False):
     _, tUnit = int(timeUnit[:-1]), timeUnit[-1]
 
     startTime = fromdate
-    endTime = (pd.Timestamp.now() - pd.Timedelta(1, tUnit)).round(timeUnit)
+    endTime = (Timestamp.now() - Timedelta(1, tUnit)).round(timeUnit)
 
     query = {
         "binSize": binSize,
         "count": 600,
         "partial": "false",
         "reverse": "false",
+        # need to get the symbol from records too or from file name
         "symbol": "XBTUSD",
     }
     kwargs = {"endTime": endTime, "fout": fout, "pause": 1.2, "startTime": startTime}
@@ -109,15 +111,16 @@ def get_recent_data(fromdate, binsize="1m", fout="tmp.csv", live=False):
     return sess
 
 
-def update_file(fname, fout="./tmp.csv", live=False):
+def update_file(fname: str, fout: str = "./tmp.csv", live: bool = False):
     """
+    Write the fname updated with new data.
+
     Keyword Arguments:
     fname -- name of the file to update. should be name btxData-{freq}-{lastudpatedate}.csv
 
     get the freq from the file name.
     Download new data in tmp.csv
     append tmp.csv to original file but update the name with last updatedate
-    Returns: write the fname updated with new data
     """
     # get
     oldDate = get_recent_record_file_date(fname)
@@ -128,7 +131,7 @@ def update_file(fname, fout="./tmp.csv", live=False):
     return update_name(fname)
 
 
-def update_name(fname):
+def update_name(fname: str):
     """
     Keyword Arguments:
     fname -- name of the file to update
@@ -153,28 +156,26 @@ def update_name(fname):
     return
 
 
-def get_fname_binsize(fname):
-    """ If the name is {base}-{binsize}-{date}.csv
-    return the binsize """
+def get_fname_binsize(fname: str) -> str:
+    """If the name is {base}-{binsize}-{date}.csv return the binsize."""
     return fname.split("-")[1]
 
 
-def get_fname_basename(fname):
-    """ If the name is {base}-{binsize}-{date}.csv
-    return the basename """
+def get_fname_basename(fname: str) -> str:
+    """If the name is {base}-{binsize}-{date}.csv return the basename."""
     return fname.split("-")[0]
 
 
-def concat_files(file1, file2, removetmp=False):
+def concat_files(file1: str, file2: str, removetmp: bool = False):
     """
+    Write a file fname which is the concatenation of file1 and file2.
+
     Keyword Arguments:
     file1 -- first file (to be on the top)
     file2 -- second or tail fail
     Files should have the same format
     concat file 2 at the end of file 1
     removeoriginal (False) -- should we remove file1 and 2 after concatenation
-
-    Returns: write a file fname which is the concatenation of file1 and file2
     """
     my_cmd = ["tail", "-n", "+2", file2]
     with open(file1, "a") as f:
@@ -186,17 +187,21 @@ def concat_files(file1, file2, removetmp=False):
         return _
 
 
-def main(fname, live):
-    """Update the btxData file fname with latest data"""
+def main(fname: str, live: bool):
+    """Update the btxData file fname with latest data."""
     update_file(fname, live=live)
 
 
 def parse_args():
+    """Parse arguments."""
     parser = argparse.ArgumentParser(
         description="Utility to update btxDatafile with latest data"
     )
 
-    fname_help = f"name of the file to update.  if None takes the latest btxDatafile in current directory"
+    fname_help = (
+        f"name of the file to update.  if None takes the latest"
+        " btxDatafile in current directory"
+    )
     live_help = f"If present use live historic data"
     logLevel_def = "INFO"
     logLevel_help = f"Set logLevel (default {logLevel_def})"
