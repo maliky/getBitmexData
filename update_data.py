@@ -45,7 +45,7 @@ def get_last_record(fullname: str) -> str:
     _lrs = sp.run(f"tail {fullname}".split(), stdout=sp.PIPE).stdout.split(b"\n")
 
     # on les filtres
-    lastRecords = [lr.decode() for lr in _lrs if not lr.startswith(b"#")]
+    lastRecords = [lr.decode() for lr in _lrs if not lr.startswith(b"#") and len(lr)]
 
     assert len(
         lastRecords
@@ -67,7 +67,8 @@ def get_record_date(record) -> Timestamp:
 def get_recent_record_file_date(fullname: str) -> Timestamp:
     """
     Get the most recent record date from fullname.
-
+    
+    get it from the last record of the file.
     Keyword Arguments:
     fullname -- nom du fichier
     """
@@ -91,7 +92,7 @@ def get_recent_data(
     _, tUnit = int(timeUnit[:-1]), timeUnit[-1]
 
     startTime = fromdate
-    endTime = (Timestamp.now() - Timedelta(1, tUnit)).round(timeUnit)
+    endTime = (Timestamp.now() - Timedelta(2, tUnit)).round(timeUnit)
 
     query = {
         "binSize": binSize,
@@ -105,8 +106,8 @@ def get_recent_data(
 
     # use live or test ids
     URL, KEY, SECRET = URLS[live]
-
-    logger.warning(f"{KEY}, {SECRET}, {URL}, {query}, {kwargs}")
+    URL = URL + "trade/bucketed"
+    logger.warning(f"Key: {KEY}, {URL}, {query}, {kwargs}")
     sess = get_bucketed_trades(KEY, SECRET, URL, Q=query, **kwargs)
     return sess
 
@@ -118,9 +119,9 @@ def update_file(fname: str, fout: str = "./tmp.csv", live: bool = False):
     Keyword Arguments:
     fname -- name of the file to update. should be name btxData-{freq}-{lastudpatedate}.csv
 
-    get the freq from the file name.
+    Get the freq from the file name.
     Download new data in tmp.csv
-    append tmp.csv to original file but update the name with last updatedate
+    Append tmp.csv to original file but update the name with last updatedate
     """
     # get
     oldDate = get_recent_record_file_date(fname)
@@ -225,5 +226,5 @@ if __name__ == "__main__":
     else:
         fname = args.fname
 
-    logger.warning(f"Running {args.live} with {fname}")
+    logger.warning(f"Running {'Live' if args.live else 'Test'} with {fname}")
     main(fname, args.live)
