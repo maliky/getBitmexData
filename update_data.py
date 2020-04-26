@@ -119,7 +119,7 @@ def update_file(fname: str, fout: str = "./tmp.csv", live: bool = False):
     Keyword Arguments:
     fname -- name of the file to update. should be name btxData-{freq}-{lastudpatedate}.csv
 
-    Get the freq from the file name.
+    Get the freq (ie bin size) from the file name.
     Download new data in tmp.csv
     Append tmp.csv to original file but update the name with last updatedate
     """
@@ -178,6 +178,7 @@ def concat_files(file1: str, file2: str, removetmp: bool = False):
     concat file 2 at the end of file 1
     removeoriginal (False) -- should we remove file1 and 2 after concatenation
     """
+    # pb this erased data
     my_cmd = ["tail", "-n", "+2", file2]
     with open(file1, "a") as f:
         _ = sp.run(my_cmd, stdout=f)
