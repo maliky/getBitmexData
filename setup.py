@@ -31,7 +31,7 @@ setup(
     },
     install_requires=[
         "pandas",
-        "numpy",
+        # "numpy",
         # "websocket_client",
         "requests",
     ],
