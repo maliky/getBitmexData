@@ -1,4 +1,9 @@
+Ressources
 __pycache__
+.python-version
+bin/*
+lib/*
+pyvenv.cfg
 settings.py
 btxData*
 tmp*
@@ -7,3 +12,4 @@ kola*
 *cache
 dist/
 *egg-info/
+README.org

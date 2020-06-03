@@ -7,30 +7,15 @@ import logging
 import os
 import time
 
-try:
-    from auth import APIKeyAuthWithExpires
-
-    # create a settings file with your IDs
-    from settings import (
-        LIVE_KEY,
-        LIVE_SECRET,
-        LIVE_URL,
-        TEST_KEY,
-        TEST_SECRET,
-        TEST_URL,
-    )
-except ModuleNotFoundError:
-    from .auth import APIKeyAuthWithExpires
-
-    # create a settings file with your IDs
-    from .settings import (
-        LIVE_KEY,
-        LIVE_SECRET,
-        LIVE_URL,
-        TEST_KEY,
-        TEST_SECRET,
-        TEST_URL,
-    )
+from auth import APIKeyAuthWithExpires
+from settings import (
+    LIVE_KEY,
+    LIVE_SECRET,
+    LIVE_URL,
+    TEST_KEY,
+    TEST_SECRET,
+    TEST_URL,
+)
 
 os.environ["TZ"] = "UTC"
 time.tzset()
@@ -136,7 +121,7 @@ def get_bucketed_trades(
     )
 
     # Init session and defaults settings
-    auth = APIKeyAuthWithExpires(apiKey, apiSecret)
+    auth = None #auth = APIKeyAuthWithExpires(apiKey, apiSecret)
     sess = init_session()
     fout = (
         "./btxData-{binSize}-{endTime.strftime('%Y%m%dT%H:%M')}.csv"
@@ -291,9 +276,8 @@ def parse_args():
 
     return parser.parse_args()
 
-
-if __name__ == "__main__":
-
+def main_prg():
+    """Run the main programme."""
     args = parse_args()
 
     logger.setLevel(args.logLevel)
@@ -336,3 +320,7 @@ if __name__ == "__main__":
     sess = get_bucketed_trades(
         KEY, SECRET, f"{URL}{args.entryPoint}", Q=query, **kwargs
     )
+
+
+if __name__ == "__main__":
+    main_prg()

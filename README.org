@@ -6,7 +6,7 @@ It only requires some of [[https://github.com/BitMEX/api-connectors][BitMex api-
 Please, just check the import section of [[https://github.com/maliky/getBitmexData/blob/master/getBitmexData.py][getBitmexData.py]] and install the packages you are missing, if any... and preferably in a virtual env.  I like [[https://github.com/pypa/pipenv][pipenv]]. :)
 
 ** Licence
-There is no licence.  You do what you want with the code.  It's only a few lines of [[https://github.com/psf/black][blacked]] code, so please DO CHECK it before running it. 
+  GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 
 ** Installation
 #+BEGIN_SRC bash  
@@ -14,10 +14,17 @@ git clone git@github.com:maliky/getBitmexData.git
 cd getBitmexData
 #+END_SRC
 
+Or with pip
+#+BEGIN_SRC bash  
+pip install getBitmexData
+#+END_SRC
+
 ** Usage
 Just run the getBitmexData.py like this for exemple
 #+BEGIN_SRC bash -i 
 python getBitmexData.py --startTime "2019-08-01"
+# or if you install with pip
+getBitmexData --startTime "2020-06-01"
 #+END_SRC
 
 Or update an existing file previously downloaded with getBitmexData.py (columns of csv file should be the same). It will get the time from the last saved record in the file and the bin size from the file name and continue from there. 

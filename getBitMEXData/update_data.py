@@ -3,25 +3,21 @@
 import argparse
 import subprocess as sp
 from pandas import Timestamp, Timedelta
-from kola.settings import (
+from getBitMEXData.settings import (
     LIVE_KEY,
     LIVE_SECRET,
     LIVE_URL,
     TEST_KEY,
     TEST_SECRET,
     TEST_URL,
+    TC
 )
 import logging
-from kola.utils.datefunc import TC  # time conversion
 import os
 import time
 
-try:
-    import getBitmexData.utils as u
-    from getBitmexData.getBitmexData import get_bucketed_trades
-except ModuleNotFoundError:
-    import utils as u
-    from getBitmexData import get_bucketed_trades
+import utils as u
+from getBitMEXData import get_bucketed_trades
 
 
 os.environ["TZ"] = "UTC"

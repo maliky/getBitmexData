@@ -1,4 +1,4 @@
-import pandas as pd
+# import pandas as pd
 import os
 import os.path as op
 import re
@@ -10,13 +10,13 @@ from pandas.errors import OutOfBoundsDatetime
 
 
 def is_file(fname):
-    """renvois true or false depending if file pas condition"""
+    """Renvois true or false depending if file pas condition."""
     #  isabs isdir isfile islink ismount
     return op.isfile(fname)
 
 
 def fcond(f, pat):
-    """set a condition on a file name"""
+    """Set a condition on a file name."""
     rpat = re.compile(pat)
     return rpat.search(f)
 
