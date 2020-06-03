@@ -1,18 +1,8 @@
 Get BitMex Data
 ===============
 
-This is a small utility for linux based systems to download or update
-Bitmex historical data in "1m", "5m" or coarser binSizes.
-
-It only requires some of `BitMex api-connectors's
-files <https://github.com/BitMEX/api-connectors>`__ (that I cutomized in
-auth.py) and a few other commonly used python modules such *request* and
-*pandas*.
-
-Please, just check the import section of
-`getBitmexData.py <https://github.com/maliky/getBitmexData/blob/master/getBitmexData.py>`__
-and install the packages you are missing, if any… and preferably in a
-virtual env. I like `pipenv <https://github.com/pypa/pipenv>`__. :)
+This is an utility to download and update Bitmex historical price data.
+It can download several binSize: "1m", "5m" or coarser.
 
 Licence
 -------

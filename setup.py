@@ -5,6 +5,7 @@ Setup.py.
 Check https://packaging.python.org/tutorials/packaging-projects/
 and file in python/Docs/python-in-nutshell.pdf
 upload to https://test.pypi.org/manage/projects/.
+https://setuptools.readthedocs.io/en/latest/setuptools.html#including-data-files
 """
 from setuptools import setup, find_packages
 
@@ -13,8 +14,8 @@ with open("README.rst", "r") as f:
 
 setup(
     name="getBitMEXData",
-    version="0.0.1",
-    description="Utility to download bitMEX price data",
+    version="0.0.4",
+    description="Utility to download bitMEX historical price data",
     long_description=long_description,
     long_description_content_type="text/x-rst",
     author="Malik Koné",
@@ -25,13 +26,13 @@ setup(
     python_requires=">=3.8",
     entry_points={
         "console_scripts": [
-            "getBitmexData=getBitmexData.getBitmexData:main_prg",            
+            "getBitMEXData=getBitMEXData.getBitMEXData:main_prg",            
         ]
     },
     install_requires=[
         "pandas",
         "numpy",
-        "websocket_client",
+        # "websocket_client",
         "requests",
     ],
     extras_require={
@@ -53,7 +54,6 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Topic :: Office/Business :: Financial",
         "Topic :: Utilities",
-        "Topic :: System :: Monitoring",
     ],
-    package_data={"kolaBitMEXBot": ["*.txt"], "kolaBitMEXBot": ["*.tsv"]},
+    package_data={"Doc": ["*txt"]},
 )

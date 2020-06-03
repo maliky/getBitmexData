@@ -1,1 +1,0 @@
-/home/mlk/Kola/kola/settings.py

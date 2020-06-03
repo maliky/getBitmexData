@@ -1,4 +1,5 @@
 Ressources
+build/
 __pycache__
 .python-version
 bin/*
@@ -13,3 +14,6 @@ kola*
 dist/
 *egg-info/
 README.org
+*csv
+*ipynb
+*.ipynb*
