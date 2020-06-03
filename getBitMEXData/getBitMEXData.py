@@ -286,7 +286,7 @@ def main_prg():
     logger.setLevel(args.logLevel)
 
     timeUnit = TC[args.binSize]
-    tUnit = timeUnit[-1]
+    nUnit, tUnit = int(timeUnit[:-1]), timeUnit[-1]
 
     startTime = (
         Timestamp(STARTDATE_DFT[args.symbol]).round(timeUnit)
@@ -295,7 +295,7 @@ def main_prg():
     )
     # To avoir empty request we stop one unit befor the present date.
     endTime = (
-        (Timestamp.now() - Timedelta(1, tUnit)).round(timeUnit)
+        (Timestamp.now() - Timedelta(nUnit, tUnit)).round(timeUnit)
         if args.endTime is None
         else Timestamp(args.endTime)
     )
