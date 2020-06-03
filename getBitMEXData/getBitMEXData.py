@@ -6,6 +6,7 @@ import argparse
 import logging
 import os
 import time
+import sys
 
 import requests as rq
 from pandas import DataFrame, Timestamp, Timedelta
@@ -16,7 +17,10 @@ from getBitMEXData.settings import LIVE_URL, TEST_URL, TC, STARTDATE_DFT
 os.environ["TZ"] = "UTC"
 time.tzset()
 
+
 logger = logging.getLogger()
+# logger.setLevel('INFO')
+
 STRF = "%Y-%m-%dT%H:%M"  # default time format for saving the data
 
 # Converts bitmex time unit to pd.timestamp time units
@@ -232,49 +236,40 @@ def reached(lastReqDate, endTime=None):
 
 def parse_args():
     """Settings the applications's arguments and options."""
-
     description = """An application to download bitmex's data with what ever resolution you need."""
-    fout_default = "btx"
-    fout_help = f"base Name of the csv file where to save the results. (default {fout}<symbol>-<BINSIZE>-<LASTRECORDDATE>.csv)"
-    count_default = 600
+    fout_dft = "btx"
+    fout_help = f"base Name of the csv file where to save the results. (default {fout_dft}<symbol>-<BINSIZE>-<LASTRECORDDATE>.csv)"
+    count_dft = 600
     count_help = "Max number each of records in requests (default 600)"
-    pause_default = 1.2
+    pause_dft = 1.2
     pause_help = "Min time to wait between 2 requests (default 1.2).  to avoid overloading the server"
-    binSize_default = "1d"
+    binSize_dft = "1d"
     binSize_help = "Bin size or type requested, or time resolution (default 1d), can also be 1m, 5m, 1h."
-    startTime_default = None
+    startTime_dft = None
     startTime_help = "Time to start the data collection (default, oldest available 2016-05-05 04:00:00 'UTC').  Check time zones"
-    endTime_default = None
+    endTime_dft = None
     endTime_help = "Time to end the data collection (default, now - 1 unit of chosen resolution)-05-05 04:00:00 'UTC').  Check TZ"
-    logLevel_default = "WARNING"
+    logLevel_dft = "WARNING"
     logLevel_help = "set the log level"
     live_help = "If present use LIVE keys to get the data else use the test site."
-    entryPoint_default = "trade/bucketed"
+    entryPoint_dft = "trade/bucketed"
     entryPoint_help = "Set the entry level.  the path to append to the LIVE or TEST url before the query"
     symbol_help = "Set the symbol for which to get historical data def. XBTUSD.  default start date may change depending on symbol"
-    symbol_default = "XBTUSD"
+    symbol_dft = "XBTUSD"
 
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("--fout", "-f", help=fout_help, default=fout_default)
-    parser.add_argument(
-        "--count", "-c", type=int, help=count_help, default=count_default
-    )
-    parser.add_argument(
-        "--pause", "-p", type=float, help=pause_help, default=pause_default
-    )
-    parser.add_argument("--binSize", "-b", help=binSize_help, default=binSize_default)
-    parser.add_argument(
-        "--startTime", "-s", help=startTime_help, default=startTime_default
-    )
-    parser.add_argument("--endTime", "-e", help=endTime_help, default=endTime_default)
+    parser.add_argument("--fout", "-f", help=fout_help, default=fout_dft)
+    parser.add_argument("--count", "-c", type=int, help=count_help, default=count_dft)
+    parser.add_argument("--pause", "-p", type=float, help=pause_help, default=pause_dft)
+    parser.add_argument("--binSize", "-b", help=binSize_help, default=binSize_dft)
+    parser.add_argument("--startTime", "-s", help=startTime_help, default=startTime_dft)
+    parser.add_argument("--endTime", "-e", help=endTime_help, default=endTime_dft)
     parser.add_argument("--live", "-l", action="store_true", help=live_help)
+    parser.add_argument("--logLevel", "-L", help=logLevel_help, default=logLevel_dft)
     parser.add_argument(
-        "--logLevel", "-L", help=logLevel_help, default=logLevel_default
+        "--entryPoint", "-E", help=entryPoint_help, default=entryPoint_dft
     )
-    parser.add_argument(
-        "--entryPoint", "-E", help=entryPoint_help, default=entryPoint_default
-    )
-    parser.add_argument("--symbol", "-S", help=symbol_help, default=symbol_default)
+    parser.add_argument("--symbol", "-S", help=symbol_help, default=symbol_dft)
 
     return parser.parse_args()
 
@@ -316,9 +311,12 @@ def main_prg():
     # use live or test ids
     URL = URLS[args.live]
 
+    logger.warning(f"Writting data to {kwargs['fout']}")
+    
     _ = get_bucketed_trades(url=f"{URL}{args.entryPoint}", Q=query, **kwargs)
     return None
 
 
 if __name__ == "__main__":
     main_prg()
+    sys.exit()
