@@ -1,0 +1,36 @@
+usage: getBitMEXData.py [-h] [--fout FOUT] [--count COUNT] [--pause PAUSE]
+                        [--binSize BINSIZE] [--startTime STARTTIME]
+                        [--endTime ENDTIME] [--live] [--logLevel LOGLEVEL]
+                        [--entryPoint ENTRYPOINT] [--symbol SYMBOL]
+
+An application to download bitmex's data with what ever resolution you need.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --fout FOUT, -f FOUT  base Name of the csv file where to save the results.
+                        (default btxData-freq-lastrecorddate.csv)
+  --count COUNT, -c COUNT
+                        Max number each of records in requests (default 600)
+  --pause PAUSE, -p PAUSE
+                        Min time to wait between 2 requests (default 1.2). to
+                        avoid overloading the server
+  --binSize BINSIZE, -b BINSIZE
+                        Bin size or type requested, or time resolution
+                        (default 1d), can also be 1m, 5m, 1h.
+  --startTime STARTTIME, -s STARTTIME
+                        Time to start the data collection (default, oldest
+                        available 2016-05-05 04:00:00 'UTC'). Check time zones
+  --endTime ENDTIME, -e ENDTIME
+                        Time to end the data collection (default, now - 1 unit
+                        of chosen resolution)-05-05 04:00:00 'UTC'). Check TZ
+  --live, -l            If present use LIVE keys to get the data else use the
+                        test site.
+  --logLevel LOGLEVEL, -L LOGLEVEL
+                        set the log level
+  --entryPoint ENTRYPOINT, -E ENTRYPOINT
+                        Set the entry level. the path to append to the LIVE or
+                        TEST url before the query
+  --symbol SYMBOL, -S SYMBOL
+                        Set the symbol for which to get historical data def.
+                        XBTUSD. default start date may change depending on
+                        symbol
