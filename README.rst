@@ -2,7 +2,8 @@ Get BitMex Data
 ===============
 
 This is an utility to download and update Bitmex historical price data.
-It can download several binSize: "1m", "5m" or coarser.
+It can download several binSize ("1m", "5m" or coarser). By default you
+can easily download data for XBTUSD and ADAM20 instruments.
 
 Licence
 -------
@@ -30,9 +31,9 @@ Just run the getBitMEXData.py like this for exemple
 
 ::
 
-   python getBitMEXData.py --startTime "2019-08-01"
+   python getBitMEXData.py --startTime "2019-08-01" --live
    # or if you install with pip
-   getBitMEXData --startTime "2020-06-01"
+   getBitMEXData --startTime "2020-06-01"  --live
 
 Or update an existing file previously downloaded with getBitMEXData.py
 (columns of csv file should be the same). It will get the time from the
