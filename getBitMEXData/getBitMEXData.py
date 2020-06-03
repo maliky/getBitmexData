@@ -235,7 +235,7 @@ def parse_args():
 
     description = """An application to download bitmex's data with what ever resolution you need."""
     fout_default = "btxData"
-    fout_help = f"base Name of the csv file where to save the results. (default {fout_default}-freq-lastrecorddate.csv)"
+    fout_help = f"base Name of the csv file where to save the results. (default {fout_default}-<BINSIZE>-<LASTRECORDDATE>.csv)"
     count_default = 600
     count_help = "Max number each of records in requests (default 600)"
     pause_default = 1.2
@@ -308,7 +308,7 @@ def main_prg():
     }
     kwargs = {
         "endTime": endTime,
-        "fout": f"{args.fout}",
+        "fout": f"{args.fout}-{args.binSize}-{endTime}",
         "pause": args.pause,
         "startTime": startTime,
     }
