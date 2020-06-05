@@ -4,6 +4,8 @@ import os.path as op
 import re
 import datetime as dt
 import logging
+
+from pandas import DataFrame, to_datetime
 from pandas.errors import OutOfBoundsDatetime
 
 """ Bibliothèques d'utilitaire pour manipuler les fichiers """
@@ -95,10 +97,10 @@ def get_cond_recent_info(
     # put this in a dataFrame
     colfilen = "fname"
     coldaten = "getmtime"
-    df = pd.DataFrame(fnames, columns=[colfilen, coldaten])
+    df = DataFrame(fnames, columns=[colfilen, coldaten])
 
     # parse date col to_datetime format
-    df.loc[:, coldaten] = pd.to_datetime(df.loc[:, coldaten], unit="s")
+    df.loc[:, coldaten] = to_datetime(df.loc[:, coldaten], unit="s")
     # filtering dates
     if dcond is not None:
         mask = df.loc[:, coldaten].apply(dcond)
@@ -220,7 +222,7 @@ cols can be: fullname, mtime, atime, ctime, size, isdir, isfile, islink, ext, pa
         srcdir = os.getcwd()
 
     fullname = ["/".join([srcdir, f]) for f in os.listdir(srcdir)]
-    df = pd.DataFrame(data=fullname, columns=["fullname"])
+    df = DataFrame(data=fullname, columns=["fullname"])
 
     INFOS = {
         "mtime": op.getmtime,
@@ -238,14 +240,18 @@ cols can be: fullname, mtime, atime, ctime, size, isdir, isfile, islink, ext, pa
     for col, func in INFOS.items():
         df.loc[:, col] = df.fullname.apply(func)
         if "time" in col:
-            df.loc[:, col] = pd.to_datetime(df.fullname.apply(func), unit="s")
+            df.loc[:, col] = to_datetime(df.fullname.apply(func), unit="s")
             df.loc[:, f"r{col}"] = df.loc[:, col].apply(lambda d: d.round("1s"))
 
     return df
 
 
 def get_extraction_date(ffname, offset=60):
-    """Parse the ffname which should be an extraction file to get the date from it and return the date - offset (default 3600s)"""
+    """
+    Parse the ffname which should be an extraction file to get the date from it.
+
+    return the date - offset (default 3600s)
+    """
     # extracting the date from the name
     pat = r"_(?P<day>\d+)_(?P<month>\d+)_(?P<year>\d+)_(?P<hour>\d+)_(?P<minute>\d+)\..{3}$"
     # print(f'pat={pat}\n{ffname}')

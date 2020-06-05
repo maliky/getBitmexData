@@ -2,22 +2,19 @@
 """ Fichier avec des fonctions pour récupérer les données historique de BitMex en ligne """
 import argparse
 import subprocess as sp
-from pandas import Timestamp, Timedelta
-from getBitMEXData.settings import (
-    LIVE_KEY,
-    LIVE_SECRET,
-    LIVE_URL,
-    TEST_KEY,
-    TEST_SECRET,
-    TEST_URL,
-    TC
-)
 import logging
 import os
 import time
 
-import utils as u
-from getBitMEXData import get_bucketed_trades
+from pandas import Timestamp, Timedelta
+
+import getBitMEXData.utils as u
+from getBitMEXData.settings import (
+    LIVE_URL,
+    TEST_URL,
+    TC
+)
+from getBitMEXData.getBitMEXData import get_bucketed_trades
 
 
 os.environ["TZ"] = "UTC"
@@ -30,8 +27,8 @@ STRF = "%Y-%m-%d %H:%M"  # default time format
 
 # Converts bitmex time unit to timestamp time units
 URLS = {
-    True: (LIVE_URL, LIVE_KEY, LIVE_SECRET),
-    False: (TEST_URL, TEST_KEY, TEST_SECRET),
+    True: (LIVE_URL),
+    False: (TEST_URL),
 }
 
 
@@ -101,10 +98,10 @@ def get_recent_data(
     kwargs = {"endTime": endTime, "fout": fout, "pause": 1.2, "startTime": startTime}
 
     # use live or test ids
-    URL, KEY, SECRET = URLS[live]
+    URL = URLS[live]
     URL = URL + "trade/bucketed"
-    logger.warning(f"Key: {KEY}, {URL}, {query}, {kwargs}")
-    sess = get_bucketed_trades(KEY, SECRET, URL, Q=query, **kwargs)
+    logger.warning(f"{URL}, {query}, {kwargs}")
+    sess = get_bucketed_trades(URL, Q=query, **kwargs)
     return sess
 
 

@@ -18,3 +18,5 @@ README.org
 *ipynb
 *.ipynb*
 Data/
+setup.cfg
+.dir-locals.el

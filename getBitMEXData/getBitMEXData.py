@@ -19,7 +19,7 @@ time.tzset()
 
 
 logger = logging.getLogger()
-# logger.setLevel('INFO')
+logger.setLevel("INFO")
 
 STRF = "%Y-%m-%dT%H:%M"  # default time format for saving the data
 
@@ -102,15 +102,15 @@ def get_bucketed_trades(
     """
     Returns the historical data from bitMEX (default).
 
-    resulting values are : timestamp, symbol, open, high, low, close, trades, 
+    resulting values are : timestamp, symbol, open, high, low, close, trades,
     volume,  vwap,  lastSize, turnover, homeNotional, foreignNotional,
 
     - url : live or test url
     Times are in isoformat eg. 2016-12-27T11:00Z
     - `startTime`: date of first record to download
-    - `endTime` : date of the last recorde to download 
-    - binSize : bucketed size to ask: one of 1m, 5m, 1h, 1d    
-    
+    - `endTime` : date of the last recorde to download
+    - binSize : bucketed size to ask: one of 1m, 5m, 1h, 1d
+
     Params:
     - Q : The Query requested.
     should be a dictionnary with keys binSize, partial, symbol, count and reverse.
@@ -153,21 +153,19 @@ def get_bucketed_trades(
         Q, firstReqDate, lastReqDate = request_write_nlog(
             Q, sess, auth, url, fd, header=True, pause=0
         )
-        logging.warning(
-            f"Req 0: Q={Q}, {firstReqDate.strftime(STRF)}"
-            f" --> {lastReqDate.strftime(STRF)}"
-        )
+        logging.debug(f"Req 0: Q={Q})")
+        logging.info(f"{firstReqDate.strftime(STRF)}:{lastReqDate.strftime(STRF)}")
 
         i = 1
         while not reached(lastReqDate, endTime):
             Q, firstReqDate, lastReqDate = request_write_nlog(
                 Q, sess, auth, url, fd, step=i, startTime=lastReqDate, pause=pause
             )
-            print(
-                f"Req {i}: {firstReqDate.strftime(STRF)}"
-                f" --> {lastReqDate.strftime(STRF)}",
-                end="\r",
-            )
+            # print(
+            #     f"Req {i}: {firstReqDate.strftime(STRF)}"
+            #     f" --> {lastReqDate.strftime(STRF)}",
+            #     end="\r",
+            # )
             i += 1
 
     # last log before exit
@@ -312,7 +310,7 @@ def main_prg():
     URL = URLS[args.live]
 
     logger.warning(f"Writting data to {kwargs['fout']}")
-    
+
     _ = get_bucketed_trades(url=f"{URL}{args.entryPoint}", Q=query, **kwargs)
     return None
 
