@@ -5,15 +5,12 @@ import subprocess as sp
 import logging
 import os
 import time
+import sys
 
 from pandas import Timestamp, Timedelta
 
 import getBitMEXData.utils as u
-from getBitMEXData.settings import (
-    LIVE_URL,
-    TEST_URL,
-    TC
-)
+from getBitMEXData.settings import LIVE_URL, TEST_URL, TC
 from getBitMEXData.getBitMEXData import get_bucketed_trades
 
 
@@ -207,7 +204,8 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+def main_prg():
+    """Main program."""
     args = parse_args()
     logger = logging.getLogger(args.logLevel)
 
@@ -222,3 +220,8 @@ if __name__ == "__main__":
 
     logger.warning(f"Running {'Live' if args.live else 'Test'} with {fname}")
     main(fname, args.live)
+
+
+if __name__ == "__main__":
+    main_prg()
+    sys.exit()
