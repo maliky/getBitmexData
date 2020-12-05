@@ -14,7 +14,7 @@ with open("README.rst", "r") as f:
 
 setup(
     name="getBitMEXData",
-    version="0.0.9",
+    version="0.0.14",
     description="Utility to download bitMEX historical price data",
     long_description=long_description,
     long_description_content_type="text/x-rst",

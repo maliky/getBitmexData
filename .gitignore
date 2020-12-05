@@ -1,11 +1,12 @@
 Ressources
+*~
 build/
 __pycache__
 .python-version
 bin/*
 lib/*
 pyvenv.cfg
-settings.py
+# settings.py
 btxData*
 tmp*
 # a link to private keys
@@ -20,3 +21,4 @@ README.org
 Data/
 setup.cfg
 .dir-locals.el
+
