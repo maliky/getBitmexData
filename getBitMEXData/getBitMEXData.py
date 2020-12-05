@@ -2,10 +2,11 @@
 """main file getBitMEXData.py."""
 from time import sleep
 from typing import Tuple
+
 import argparse
 import logging
 import os
-import platform # handle os check
+import platform  # handle os check
 import time
 import sys
 import requests as rq
@@ -13,19 +14,10 @@ from pandas import DataFrame, Timestamp, Timedelta
 from pathlib import Path
 
 from getBitMEXData.getBitMEXtypes import bucketT, oTimestampT, symbolT
-from getBitMEXData.settings import LIVE_URL, TEST_URL, TC, STARTDATE_DFT
-
-if platform.system() == "Linux":
-    # Time.tzset ne fonctionne qu'avec UNIX le mettre en commentaire pour windows
-    # mais veillé à spécifier la date de départ et de fin des messages.  avec les option --startTime et --endTime
-    os.environ["TZ"] = "UTC"
-    time.tzset()
-
+from getBitMEXData.settings import LIVE_URL, TEST_URL, TC, STARTDATE_DFT, OS_TZ, STRF
 
 logger = logging.getLogger()
 logger.setLevel("INFO")
-
-STRF = "%Y-%m-%dT%H:%M"  # default time format for saving the data
 
 # Converts bitmex time unit to pd.timestamp time units
 URLS = {
@@ -131,13 +123,13 @@ def get_bucketed_trades(
     auth = None  # auth = APIKeyAuthWithExpires(apiKey, apiSecret)
     sess = init_session()
     fout = (
-        "./btxData-{binSize}-{endTime.strftime('%Y%m%dT%H_%M')}.csv"
+        "./btxData-{binSize}-{endTime.strftime(STRF)}.csv"
         if fout is None
         else fout
     )
     # prise en compte de windows
     fout = Path(fout)
-    
+
     Q = (
         {
             "binSize": binSize,
@@ -231,12 +223,12 @@ def reached(lastReqDate, endTime=None):
     Returns True si endTime <= lastReqDate (end more recent than last)
     or if endTime is None
     """
-    # Check the tz settings
-    endTz = os.environ["TZ"] if endTime.tz is None else None
-    lastTz = os.environ["TZ"] if lastReqDate.tz is None else None
-    return endTime is None or Timestamp(endTime, tz=endTz) <= Timestamp(
-        lastReqDate, tz=lastTz
-    )
+    endTz = OS_TZ if endTime is None or endTime.tz is None else endTime.tz
+    lastTz = OS_TZ if lastReqDate.tz is None else lastReqDate.tz
+
+    return endTime is None or Timestamp(endTime).tz_localize(endTz) <= Timestamp(
+        lastReqDate
+    ).tz_convert(lastTz)
 
 
 def parse_args():
@@ -293,12 +285,14 @@ def main_prg():
         if args.startTime is None
         else Timestamp(args.startTime)
     )
-    # To avoir empty request we stop one unit befor the present date.
+
+    # To avoid empty request we stop one unit befor the present date.
     endTime = (
         (Timestamp.now() - Timedelta(nUnit, tUnit)).round(timeUnit)
         if args.endTime is None
         else Timestamp(args.endTime)
     )
+
     query = {
         "binSize": args.binSize,
         "count": args.count,
@@ -306,11 +300,11 @@ def main_prg():
         "reverse": "false",
         "symbol": args.symbol,
     }
-    kwargs = {
-        "endTime": endTime,
+    kwargs = {  # key words arguments
+        "endTime": endTime.tz_localize(OS_TZ),
         "fout": f"{args.fout}{args.symbol}-{args.binSize}-{endTime}",
         "pause": args.pause,
-        "startTime": startTime,
+        "startTime": starTime.tz_localize(OS_TZ),
     }
 
     # use live or test ids
