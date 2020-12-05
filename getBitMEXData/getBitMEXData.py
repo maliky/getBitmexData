@@ -5,17 +5,21 @@ from typing import Tuple
 import argparse
 import logging
 import os
+import platform # handle os check
 import time
 import sys
-
 import requests as rq
 from pandas import DataFrame, Timestamp, Timedelta
+from pathlib import Path
 
 from getBitMEXData.getBitMEXtypes import bucketT, oTimestampT, symbolT
 from getBitMEXData.settings import LIVE_URL, TEST_URL, TC, STARTDATE_DFT
 
-os.environ["TZ"] = "UTC"
-time.tzset()
+if platform.system() == "Linux":
+    # Time.tzset ne fonctionne qu'avec UNIX le mettre en commentaire pour windows
+    # mais veillé à spécifier la date de départ et de fin des messages.  avec les option --startTime et --endTime
+    os.environ["TZ"] = "UTC"
+    time.tzset()
 
 
 logger = logging.getLogger()
@@ -127,10 +131,13 @@ def get_bucketed_trades(
     auth = None  # auth = APIKeyAuthWithExpires(apiKey, apiSecret)
     sess = init_session()
     fout = (
-        "./btxData-{binSize}-{endTime.strftime('%Y%m%dT%H:%M')}.csv"
+        "./btxData-{binSize}-{endTime.strftime('%Y%m%dT%H_%M')}.csv"
         if fout is None
         else fout
     )
+    # prise en compte de windows
+    fout = Path(fout)
+    
     Q = (
         {
             "binSize": binSize,
