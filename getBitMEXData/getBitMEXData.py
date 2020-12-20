@@ -14,7 +14,19 @@ from pandas import DataFrame, Timestamp, Timedelta
 from pathlib import Path
 
 from getBitMEXData.getBitMEXtypes import bucketT, oTimestampT, symbolT
-from getBitMEXData.settings import LIVE_URL, TEST_URL, TC, STARTDATE_DFT, OS_TZ, STRF
+from getBitMEXData.settings import LIVE_URL, TEST_URL, TC, STARTDATE_DFT
+
+# setting the default time zone for the system
+if platform.system() == "Linux":
+    # Time.tzset ne fonctionne qu'avec UNIX le mettre en commentaire pour windows
+    # mais veillé à spécifier la date de départ et de fin des messages.  avec les option --startTime et --endTime
+    OS_TZ = os.environ.get("TZ", "UTC")
+else:
+    # in the case os.environ does not exist
+    OZ_TZ = "UTC"
+
+STRF = "%Y-%m-%d__%H_%M"  # default time format for saving the data
+
 
 logger = logging.getLogger()
 logger.setLevel("INFO")
@@ -285,6 +297,8 @@ def main_prg():
         if args.startTime is None
         else Timestamp(args.startTime)
     )
+    # localising the timezone
+    startTime = starTime.tz_localize(OS_TZ)
 
     # To avoid empty request we stop one unit befor the present date.
     endTime = (
@@ -293,6 +307,9 @@ def main_prg():
         else Timestamp(args.endTime)
     )
 
+    # making_sure the format is also valid for windows
+    endTime = endTime.tz_localize(OS_TZ).strftime(STRF)
+
     query = {
         "binSize": args.binSize,
         "count": args.count,
@@ -300,11 +317,13 @@ def main_prg():
         "reverse": "false",
         "symbol": args.symbol,
     }
-    kwargs = {  # key words arguments
-        "endTime": endTime.tz_localize(OS_TZ),
+
+    # kwargs stand for key words arguments
+    kwargs = {
+        "endTime": endTime
         "fout": f"{args.fout}{args.symbol}-{args.binSize}-{endTime}",
         "pause": args.pause,
-        "startTime": starTime.tz_localize(OS_TZ),
+        "startTime": starTime
     }
 
     # use live or test ids
