@@ -14,7 +14,7 @@ with open("README.rst", "r") as f:
 
 setup(
     name="getBitMEXData",
-    version="0.0.14",
+    version="0.1.0",
     description="Utility to download bitMEX historical price data",
     long_description=long_description,
     long_description_content_type="text/x-rst",
@@ -28,7 +28,6 @@ setup(
         "console_scripts": [
             "getBitMEXData=getBitMEXData.getBitMEXData:main_prg",
             "update-kola=getBitMEXData.update_kola:main_prg",            
-
         ]
     },
     install_requires=[
