@@ -27,7 +27,6 @@ else:
 
 STRF = "%Y-%m-%d__%H_%M"  # default time format for saving the data
 
-
 logger = logging.getLogger()
 logger.setLevel("INFO")
 
@@ -134,11 +133,7 @@ def get_bucketed_trades(
     # Init session and defaults settings
     auth = None  # auth = APIKeyAuthWithExpires(apiKey, apiSecret)
     sess = init_session()
-    fout = (
-        "./btxData-{binSize}-{endTime.strftime(STRF)}.csv"
-        if fout is None
-        else fout
-    )
+    fout = "./btxData-{binSize}-{endTime.strftime(STRF)}.csv" if fout is None else fout
     # prise en compte de windows
     fout = Path(fout)
 
@@ -320,10 +315,10 @@ def main_prg():
 
     # kwargs stand for key words arguments
     kwargs = {
-        "endTime": endTime
+        "endTime": endTime,
         "fout": f"{args.fout}{args.symbol}-{args.binSize}-{endTime}",
         "pause": args.pause,
-        "startTime": starTime
+        "startTime": starTime,
     }
 
     # use live or test ids
