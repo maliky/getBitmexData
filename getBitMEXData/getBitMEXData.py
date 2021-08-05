@@ -96,15 +96,15 @@ def get_time_window(rep, reverse=False) -> Tuple[Timestamp, Timestamp]:
 
 
 def get_bucketed_trades(
-    url,
-    Q=None,
-    fout=None,
-    startTime: oTimestampT = None,
-    endTime: oTimestampT = None,
-    binSize: bucketT = "1d",
-    pause: float = 0.5,
-    reverse: str = "false",
-    symbol: symbolT = "XBTUSD",
+        url,
+        Q=None,
+        fout=None,
+        startTime: oTimestampT = None,
+        endTime: oTimestampT = None,
+        binSize: bucketT = "1d",
+        pause: float = 0.5,
+        reverse: str = "false",
+        symbol: symbolT = "XBTUSD",
 ):
     """
     Returns the historical data from bitMEX (default).
@@ -167,11 +167,6 @@ def get_bucketed_trades(
             Q, firstReqDate, lastReqDate = request_write_nlog(
                 Q, sess, auth, url, fd, step=i, startTime=lastReqDate, pause=pause
             )
-            # print(
-            #     f"Req {i}: {firstReqDate.strftime(STRF)}"
-            #     f" --> {lastReqDate.strftime(STRF)}",
-            #     end="\r",
-            # )
             i += 1
 
     # last log before exit
@@ -182,7 +177,7 @@ def get_bucketed_trades(
 
 
 def request_write_nlog(
-    query, sess, auth, url, fd, header=False, pause=1, step=0, startTime=None
+        query, sess, auth, url, fd, header=False, pause=1, step=0, startTime=None
 ):
     """
     Make the requests and write the results in a file descriptor.
@@ -220,7 +215,7 @@ def request_write_nlog(
         )
 
     fd.write(logmsg)
-    print(logmsg, end="\r")
+    # print(logmsg, end="\r")
 
     return query, firstReqDate, lastReqDate
 
@@ -233,33 +228,55 @@ def reached(lastReqDate, endTime=None):
     endTz = OS_TZ if endTime is None or endTime.tz is None else endTime.tz
     lastTz = OS_TZ if lastReqDate.tz is None else lastReqDate.tz
 
-    return endTime is None or Timestamp(endTime).tz_localize(endTz) <= Timestamp(
-        lastReqDate
-    ).tz_convert(lastTz)
+    _endTime = tz_enforced(endTime, endTz)
+    _lastReqDate = tz_enforced(lastReqDate, lastTz)
+    
+    return endTime is None or _endTime <= _lastReqDate
 
+
+def tz_enforced(timestamp_, timezone_):
+    """Make sure timestamp has the timezone _timezone else raise Exception"""
+    try:
+        _timestamp = Timestamp(timestamp_).tz_convert(timezone_)
+    except TypeError as te:
+        if "tz-naive" in te.__repr__():
+            _timestamp = Timestamp(timestamp_).tz_localize(timezone_)
+        else:
+            raise te
+
+    return _timestamp
+
+    
 
 def parse_args():
     """Settings the applications's arguments and options."""
-    description = """An application to download bitmex's data with what ever resolution you need."""
+    description = """An application to download bitmex's data with fine resolution. Default are in parentheses"""
     fout_dft = "btx"
-    fout_help = f"base Name of the csv file where to save the results. (default {fout_dft}<symbol>-<BINSIZE>-<LASTRECORDDATE>.csv)"
+    fout_help = ("Base Name of the csv file to save the results in."
+                 f"({fout_dft}<symbol>-<BINSIZE>-<LAST_RECORD_DATE>.csv)")
     count_dft = 600
-    count_help = "Max number each of records in requests (default 600)"
+    count_help = "Max number of record per requests (600)"
     pause_dft = 1.2
-    pause_help = "Min time to wait between 2 requests (default 1.2).  to avoid overloading the server"
+    pause_help = ("Minimun waiting time between 2 requests (1.2)."
+                  "   Avoid overloading the server")
     binSize_dft = "1d"
-    binSize_help = "Bin size or type requested, or time resolution (default 1d), can also be 1m, 5m, 1h."
+    binSize_help = "Resolution bin size  (1d), can also be 1m, 5m, 1h."
     startTime_dft = None
-    startTime_help = "Time to start the data collection (default, oldest available 2016-05-05 04:00:00 'UTC').  Check time zones"
+    startTime_help = ("Start time of data collection ( oldest available 2016-05-05"
+                      " 04:00:00 'UTC').  Check time zones")
     endTime_dft = None
-    endTime_help = "Time to end the data collection (default, now - 1 unit of chosen resolution)-05-05 04:00:00 'UTC').  Check TZ"
+    endTime_help = ("End time of data collection.  ( now - 1 unit of chosen"
+                    " resolution)-05-05 04:00:00 'UTC').  Check TZ")
     logLevel_dft = "WARNING"
     logLevel_help = "set the log level"
-    live_help = "If present use LIVE keys to get the data else use the test site."
+    live_help = "If present use LIVE keys else bitmex testnet."
     entryPoint_dft = "trade/bucketed"
-    entryPoint_help = "Set the entry level.  the path to append to the LIVE or TEST url before the query"
-    symbol_help = "Set the symbol for which to get historical data def. XBTUSD.  default start date may change depending on symbol"
+    entryPoint_help = ("Set the path to append to the LIVE or TEST url before the query."
+                       f" ({entryPoint_dft})")
     symbol_dft = "XBTUSD"
+    symbol_help = (f"Symbol for which to get historical data ({symbol_dft}).  "
+                   "Note: default start time may change depending on this")
+
 
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--fout", "-f", help=fout_help, default=fout_dft)
@@ -293,7 +310,7 @@ def main_prg():
         else Timestamp(args.startTime)
     )
     # localising the timezone
-    startTime = starTime.tz_localize(OS_TZ)
+    startTime = startTime.tz_localize(OS_TZ)
 
     # To avoid empty request we stop one unit befor the present date.
     endTime = (
@@ -303,7 +320,7 @@ def main_prg():
     )
 
     # making_sure the format is also valid for windows
-    endTime = endTime.tz_localize(OS_TZ).strftime(STRF)
+    endTime = endTime.tz_localize(OS_TZ)  # .strftime(STRF)
 
     query = {
         "binSize": args.binSize,
@@ -318,7 +335,7 @@ def main_prg():
         "endTime": endTime,
         "fout": f"{args.fout}{args.symbol}-{args.binSize}-{endTime}",
         "pause": args.pause,
-        "startTime": starTime,
+        "startTime": startTime,
     }
 
     # use live or test ids

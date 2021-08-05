@@ -39,7 +39,7 @@ def get_last_record(fullname: str) -> str:
 
     assert len(
         lastRecords
-    ), f"Vérifier qu'il y a bien des enregistrements valides dans fullname={fullname}"
+    ), f"Vérifier qu'il y a bien des enregistrements valides dans le fichier {fullname} et qu'il ne contient pas d'espace"
 
     return lastRecords[-1]
 
@@ -57,7 +57,7 @@ def get_record_date(record) -> Timestamp:
 def get_recent_record_file_date(fullname: str) -> Timestamp:
     """
     Get the most recent record date from fullname.
-    
+
     get it from the last record of the file.
     Keyword Arguments:
     fullname -- nom du fichier
@@ -66,7 +66,11 @@ def get_recent_record_file_date(fullname: str) -> Timestamp:
 
 
 def get_recent_data(
-    fromdate: Timestamp, binsize: str = "1m", fout: str = "tmp.csv", live: bool = False
+    fromdate: Timestamp,
+    binsize: str = "1m",
+    fout: str = "tmp.csv",
+    live: bool = False,
+    symbol="XBTUSD",
 ):
     """
     Load Bitmex's data fromdate in binsize and save them in fout.
@@ -75,6 +79,7 @@ def get_recent_data(
     fromdate -- date à laquelle commencer le téléchargement
     fout     --  fichier de sortie
     live  -- use live or test keys
+    symbol -- symbol to get (XBTUSD)
     """
     # {"1m": "60s", "5m": "300s", "1h": "1H", "1d": "1D"}
     binSize = binsize
@@ -90,7 +95,7 @@ def get_recent_data(
         "partial": "false",
         "reverse": "false",
         # need to get the symbol from records too or from file name
-        "symbol": "XBTUSD",
+        "symbol": symbol,
     }
     kwargs = {"endTime": endTime, "fout": fout, "pause": 1.2, "startTime": startTime}
 
@@ -102,12 +107,16 @@ def get_recent_data(
     return sess
 
 
-def update_file(fname: str, fout: str = "./tmp.csv", live: bool = False):
+def update_file(
+    fname: str, fout: str = "./tmp.csv", live: bool = False, prefix: str = "str"
+):
     """
     Write the fname updated with new data.
 
     Keyword Arguments:
     fname -- name of the file to update. should be name btxData-{freq}-{lastudpatedate}.csv
+    live -- use live price else test
+    prefix -- prefix of fname before the symbol
 
     Get the freq (ie bin size) from the file name.
     Download new data in tmp.csv
@@ -116,10 +125,16 @@ def update_file(fname: str, fout: str = "./tmp.csv", live: bool = False):
     # get
     oldDate = get_recent_record_file_date(fname)
     binSize = get_fname_binsize(fname)
+    symbol = get_fname_symbol(fname, prefix)
     # download data in fout
     get_recent_data(oldDate, binSize, fout, live)
     concat_files(fname, fout, removetmp=True)
     return update_name(fname)
+
+
+def get_fname_symbol(fname: str, prefix: str = "btx"):
+    """If the name is {base}{symbol}-{binsize}-{date}.csv return the symbol."""
+    return fname.split("-")[0].split(prefix)[1]
 
 
 def update_name(fname: str):
@@ -179,9 +194,9 @@ def concat_files(file1: str, file2: str, removetmp: bool = False):
         return _
 
 
-def main(fname: str, live: bool):
+def main(fname: str, live: bool, prefix: str):
     """Update the btxData file fname with latest data."""
-    update_file(fname, live=live)
+    update_file(fname, live=live, prefix=prefix)
 
 
 def parse_args():
@@ -190,15 +205,21 @@ def parse_args():
         description="Utility to update btxDatafile with latest data"
     )
 
+    prefix_dft = "btx"
+    prefix_hlp = f"prefix in front of trade symbol (def. {prefix_dft})."
+    parser.add_argument("-p", "--prefix", default=prefix_dft, help=prefix_hlp)
+
     fname_help = (
         f"name of the file to update.  if None takes the latest"
         " btxDatafile in current directory"
     )
+    parser.add_argument("--fname", "-f", help=fname_help, default=None)
+
     live_help = f"If present use live historic data"
+    parser.add_argument("--live", "-l", action="store_true", help=live_help)
+
     logLevel_def = "INFO"
     logLevel_help = f"Set logLevel (default {logLevel_def})"
-    parser.add_argument("--fname", "-f", help=fname_help, default=None)
-    parser.add_argument("--live", "-l", action="store_true", help=live_help)
     parser.add_argument("--logLevel", "-L", help=logLevel_help, default=logLevel_def)
 
     return parser.parse_args()
@@ -219,7 +240,7 @@ def main_prg():
         fname = args.fname
 
     logger.warning(f"Running {'Live' if args.live else 'Test'} with {fname}")
-    main(fname, args.live)
+    main(fname, args.live, args.prefix)
 
 
 if __name__ == "__main__":
