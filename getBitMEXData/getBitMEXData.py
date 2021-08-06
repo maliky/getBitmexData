@@ -14,7 +14,21 @@ from pandas import DataFrame, Timestamp, Timedelta
 from pathlib import Path
 
 from getBitMEXData.getBitMEXtypes import bucketT, oTimestampT, symbolT
-from getBitMEXData.settings import LIVE_URL, TEST_URL, TC, STARTDATE_DFT
+from getBitMEXData.settings import (
+    LIVE_URL,
+    TEST_URL,
+    TC,
+    STARTDATE_DFT,
+    SYMBOL_DFT,
+    ENTRYPOINT_DFT,
+    LOGLEVEL_DFT,
+    ENDTIME_DFT,
+    STARTTIME_DFT,
+    BINSIZE_DFT,
+    PAUSE_DFT,
+    COUNT_DFT,
+    FOUT_DFT,
+)
 
 # setting the default time zone for the system
 if platform.system() == "Linux":
@@ -25,7 +39,7 @@ else:
     # in the case os.environ does not exist
     OZ_TZ = "UTC"
 
-STRF = "%Y-%m-%d__%H_%M"  # default time format for saving the data
+STRF = "%Y-%m-%dT%H_%M"  # default time format for saving the data
 
 logger = logging.getLogger()
 logger.setLevel("INFO")
@@ -96,15 +110,15 @@ def get_time_window(rep, reverse=False) -> Tuple[Timestamp, Timestamp]:
 
 
 def get_bucketed_trades(
-        url,
-        Q=None,
-        fout=None,
-        startTime: oTimestampT = None,
-        endTime: oTimestampT = None,
-        binSize: bucketT = "1d",
-        pause: float = 0.5,
-        reverse: str = "false",
-        symbol: symbolT = "XBTUSD",
+    url,
+    Q=None,
+    fout=None,
+    startTime: oTimestampT = None,
+    endTime: oTimestampT = None,
+    binSize: bucketT = "1d",
+    pause: float = 0.5,
+    reverse: str = "false",
+    symbol: symbolT = "XBTUSD",
 ):
     """
     Returns the historical data from bitMEX (default).
@@ -163,7 +177,7 @@ def get_bucketed_trades(
         logging.info(f"{firstReqDate.strftime(STRF)}:{lastReqDate.strftime(STRF)}")
 
         i = 1
-        while not reached(lastReqDate, endTime):
+        while not (reached(lastReqDate, endTime) or firstReqDate == lastReqDate) :
             Q, firstReqDate, lastReqDate = request_write_nlog(
                 Q, sess, auth, url, fd, step=i, startTime=lastReqDate, pause=pause
             )
@@ -177,7 +191,7 @@ def get_bucketed_trades(
 
 
 def request_write_nlog(
-        query, sess, auth, url, fd, header=False, pause=1, step=0, startTime=None
+    query, sess, auth, url, fd, header=False, pause=1, step=0, startTime=None
 ):
     """
     Make the requests and write the results in a file descriptor.
@@ -230,7 +244,7 @@ def reached(lastReqDate, endTime=None):
 
     _endTime = tz_enforced(endTime, endTz)
     _lastReqDate = tz_enforced(lastReqDate, lastTz)
-    
+
     return endTime is None or _endTime <= _lastReqDate
 
 
@@ -246,51 +260,52 @@ def tz_enforced(timestamp_, timezone_):
 
     return _timestamp
 
-    
 
 def parse_args():
     """Settings the applications's arguments and options."""
     description = """An application to download bitmex's data with fine resolution. Default are in parentheses"""
-    fout_dft = "btx"
-    fout_help = ("Base Name of the csv file to save the results in."
-                 f"({fout_dft}<symbol>-<BINSIZE>-<LAST_RECORD_DATE>.csv)")
-    count_dft = 600
-    count_help = "Max number of record per requests (600)"
-    pause_dft = 1.2
-    pause_help = ("Minimun waiting time between 2 requests (1.2)."
-                  "   Avoid overloading the server")
-    binSize_dft = "1d"
-    binSize_help = "Resolution bin size  (1d), can also be 1m, 5m, 1h."
-    startTime_dft = None
-    startTime_help = ("Start time of data collection ( oldest available 2016-05-05"
-                      " 04:00:00 'UTC').  Check time zones")
-    endTime_dft = None
-    endTime_help = ("End time of data collection.  ( now - 1 unit of chosen"
-                    " resolution)-05-05 04:00:00 'UTC').  Check TZ")
-    logLevel_dft = "WARNING"
-    logLevel_help = "set the log level"
+    fout_help = (
+        "Base Name of the csv file to save the results in."
+        f"({FOUT_DFT}<symbol>-<BINSIZE>-<LAST_RECORD_DATE>.csv)"
+    )
+    count_help = "Max number of record per requests (COUNT_DFT)"
+    pause_help = (
+        "Minimun waiting time between 2 requests (PAUSE_DFT)."
+        "   Avoid overloading the server"
+    )
+    binSize_help = "Resolution bin size  (BINSIZE_DFT), can also be 1m, 5m, 1h."
+    startTime_help = (
+        "Start time of data collection (oldest available 2016-05-05"
+        " 04:00:00 'UTC').  Check time zones"
+    )
+    endTime_help = (
+        "End time of data collection.  ( now - 1 unit of chosen"
+        " resolution)-05-05 04:00:00 'UTC').  Check TZ"
+    )
+    logLevel_help = "set the log level (LOGLEVEL_DFT)"
     live_help = "If present use LIVE keys else bitmex testnet."
-    entryPoint_dft = "trade/bucketed"
-    entryPoint_help = ("Set the path to append to the LIVE or TEST url before the query."
-                       f" ({entryPoint_dft})")
-    symbol_dft = "XBTUSD"
-    symbol_help = (f"Symbol for which to get historical data ({symbol_dft}).  "
-                   "Note: default start time may change depending on this")
-
+    entryPoint_help = (
+        "Set the path to append to the LIVE or TEST url before the query."
+        f" ({ENTRYPOINT_DFT})"
+    )
+    symbol_help = (
+        f"Symbol for which to get historical data ({SYMBOL_DFT}).  "
+        "Note: default start time may change depending on this"
+    )
 
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("--fout", "-f", help=fout_help, default=fout_dft)
-    parser.add_argument("--count", "-c", type=int, help=count_help, default=count_dft)
-    parser.add_argument("--pause", "-p", type=float, help=pause_help, default=pause_dft)
-    parser.add_argument("--binSize", "-b", help=binSize_help, default=binSize_dft)
-    parser.add_argument("--startTime", "-s", help=startTime_help, default=startTime_dft)
-    parser.add_argument("--endTime", "-e", help=endTime_help, default=endTime_dft)
+    parser.add_argument("--fout", "-f", help=fout_help, default=FOUT_DFT)
+    parser.add_argument("--count", "-c", type=int, help=count_help, default=COUNT_DFT)
+    parser.add_argument("--pause", "-p", type=float, help=pause_help, default=PAUSE_DFT)
+    parser.add_argument("--binSize", "-b", help=binSize_help, default=BINSIZE_DFT)
+    parser.add_argument("--startTime", "-s", help=startTime_help, default=STARTTIME_DFT)
+    parser.add_argument("--endTime", "-e", help=endTime_help, default=ENDTIME_DFT)
     parser.add_argument("--live", "-l", action="store_true", help=live_help)
-    parser.add_argument("--logLevel", "-L", help=logLevel_help, default=logLevel_dft)
+    parser.add_argument("--logLevel", "-L", help=logLevel_help, default=LOGLEVEL_DFT)
     parser.add_argument(
-        "--entryPoint", "-E", help=entryPoint_help, default=entryPoint_dft
+        "--entryPoint", "-E", help=entryPoint_help, default=ENTRYPOINT_DFT
     )
-    parser.add_argument("--symbol", "-S", help=symbol_help, default=symbol_dft)
+    parser.add_argument("--symbol", "-S", help=symbol_help, default=SYMBOL_DFT)
 
     return parser.parse_args()
 
@@ -333,7 +348,7 @@ def main_prg():
     # kwargs stand for key words arguments
     kwargs = {
         "endTime": endTime,
-        "fout": f"{args.fout}{args.symbol}-{args.binSize}-{endTime}",
+        "fout": f"{args.fout}{args.symbol}-{args.binSize}-{endTime.strftime(STRF)}",
         "pause": args.pause,
         "startTime": startTime,
     }
