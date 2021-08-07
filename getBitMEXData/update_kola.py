@@ -11,7 +11,7 @@ from pandas import Timestamp, Timedelta
 
 import getBitMEXData.utils as u
 from getBitMEXData.settings import LIVE_URL, TEST_URL, TC
-from getBitMEXData.getBitMEXData import get_bucketed_trades
+from getBitMEXData.main import get_bucketed_trades
 
 
 os.environ["TZ"] = "UTC"

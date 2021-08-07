@@ -26,7 +26,7 @@ setup(
     python_requires=">=3.8",
     entry_points={
         "console_scripts": [
-            "getBitMEXData=getBitMEXData.getBitMEXData:main_prg",
+            "getBitMEXData=getBitMEXData.main:main_prg",
             "update-kola=getBitMEXData.update_kola:main_prg",            
         ]
     },

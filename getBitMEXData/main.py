@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""main file getBitMEXData.py."""
+"""
+main file getBitMEXData.
+Pour charger les fichiers téléchargés utiliser btxDataLoader.py
+"""
 from time import sleep
 from typing import Tuple
 
@@ -13,8 +16,9 @@ import requests as rq
 from pandas import DataFrame, Timestamp, Timedelta
 from pathlib import Path
 
-from getBitMEXData.getBitMEXtypes import bucketT, oTimestampT, symbolT
+from getBitMEXData.types import bucketT, oTimestampT, symbolT
 from getBitMEXData.settings import (
+    STRF,
     LIVE_URL,
     TEST_URL,
     TC,
@@ -27,7 +31,7 @@ from getBitMEXData.settings import (
     BINSIZE_DFT,
     PAUSE_DFT,
     COUNT_DFT,
-    FOUT_DFT,
+    FOLDER_DFT,
 )
 
 # setting the default time zone for the system
@@ -38,8 +42,6 @@ if platform.system() == "Linux":
 else:
     # in the case os.environ does not exist
     OZ_TZ = "UTC"
-
-STRF = "%Y-%m-%dT%H_%M"  # default time format for saving the data
 
 logger = logging.getLogger()
 logger.setLevel("INFO")
@@ -115,8 +117,8 @@ def get_bucketed_trades(
     fout=None,
     startTime: oTimestampT = None,
     endTime: oTimestampT = None,
-    binSize: bucketT = "1d",
     pause: float = 0.5,
+    binSize: bucketT = "1d",
     reverse: str = "false",
     symbol: symbolT = "XBTUSD",
 ):
@@ -135,19 +137,23 @@ def get_bucketed_trades(
     Params:
     - Q : The Query requested.
     should be a dictionnary with keys binSize, partial, symbol, count and reverse.
-    - fout : the name of the file to write to the results to
+    - folder : the name of the file to write to the results to
     - pause : to throttle the requests and avoid been rejected by bitMEX
     - reverse : should we return earliest data first ?
     """
+    assert Q or (binSize and symbol and reverse), (
+        f"Either Q is set or binSize, symb and reverse",
+        f"but Q:{Q} or (binSize:{binSize} and symbol:{symbol} and reverse:{reverse})",
+    )
     logger.debug(
-        f"Got {Q}, fout={fout}, startTime={startTime}, endTime={endTime},"
+        f"Got {Q}, folder={folder}, startTime={startTime}, endTime={endTime},"
         f" binSize={binSize}, pause={pause}"
     )
 
     # Init session and defaults settings
     auth = None  # auth = APIKeyAuthWithExpires(apiKey, apiSecret)
     sess = init_session()
-    fout = "./btxData-{binSize}-{endTime.strftime(STRF)}.csv" if fout is None else fout
+    fout = f"./{symbol}-{binSize}-{endTime.strftime(STRF)}.csv" if fout is None else fout
     # prise en compte de windows
     fout = Path(fout)
 
@@ -163,12 +169,12 @@ def get_bucketed_trades(
         else Q
     )
 
-    if startTime is not None:
-        Q["startTime"] = Timestamp(startTime).round(TC[binSize])
-    else:
+    if startTime is None:
         startTime = Q["startTime"]
+    else:
+        Q["startTime"] = Timestamp(startTime).round(TC[binSize])
 
-    # Ready to open the file make requests and write results
+    # Ready to open the file to make several requests and write results
     with open(fout, "w") as fd:
         Q, firstReqDate, lastReqDate = request_write_nlog(
             Q, sess, auth, url, fd, header=True, pause=0
@@ -177,7 +183,7 @@ def get_bucketed_trades(
         logging.info(f"{firstReqDate.strftime(STRF)}:{lastReqDate.strftime(STRF)}")
 
         i = 1
-        while not (reached(lastReqDate, endTime) or firstReqDate == lastReqDate) :
+        while not (reached(lastReqDate, endTime) or firstReqDate == lastReqDate):
             Q, firstReqDate, lastReqDate = request_write_nlog(
                 Q, sess, auth, url, fd, step=i, startTime=lastReqDate, pause=pause
             )
@@ -264,9 +270,9 @@ def tz_enforced(timestamp_, timezone_):
 def parse_args():
     """Settings the applications's arguments and options."""
     description = """An application to download bitmex's data with fine resolution. Default are in parentheses"""
-    fout_help = (
-        "Base Name of the csv file to save the results in."
-        f"({FOUT_DFT}<symbol>-<BINSIZE>-<LAST_RECORD_DATE>.csv)"
+    folder_help = (
+        "folder to which we save the results. ({FOLDER_DFT}).  The file format is "
+        "<symbol>-<BINSIZE>-<LAST_RECORD_DATE>.csv"
     )
     count_help = "Max number of record per requests (COUNT_DFT)"
     pause_help = (
@@ -294,7 +300,7 @@ def parse_args():
     )
 
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("--fout", "-f", help=fout_help, default=FOUT_DFT)
+    parser.add_argument("--folder", "-f", help=folder_help, default=FOLDER_DFT)
     parser.add_argument("--count", "-c", type=int, help=count_help, default=COUNT_DFT)
     parser.add_argument("--pause", "-p", type=float, help=pause_help, default=PAUSE_DFT)
     parser.add_argument("--binSize", "-b", help=binSize_help, default=BINSIZE_DFT)
@@ -345,18 +351,21 @@ def main_prg():
         "symbol": args.symbol,
     }
 
+    _fout = Path(args.folder).joinpath(
+        f"{args.symbol}-{args.binSize}-{endTime.strftime(STRF)}"
+    )
     # kwargs stand for key words arguments
     kwargs = {
+        "fout": f"{_fout}",
         "endTime": endTime,
-        "fout": f"{args.fout}{args.symbol}-{args.binSize}-{endTime.strftime(STRF)}",
-        "pause": args.pause,
         "startTime": startTime,
+        "pause": args.pause,
     }
 
     # use live or test ids
     URL = URLS[args.live]
 
-    logger.warning(f"Writting data to {kwargs['fout']}")
+    logger.warning(f"Writting data to {kwargs['folder']}")
 
     _ = get_bucketed_trades(url=f"{URL}{args.entryPoint}", Q=query, **kwargs)
     return None
