@@ -1,0 +1,51 @@
+#+PROPERTY:  header-args :session ein-scrap  :exports both :results raw drawer :cache no
+
+* Préambule
+#+NAME: e899a243-98f9-4e87-a881-3a558b66a802
+#+BEGIN_SRC ein :results silent
+    # -*- coding: utf-8 -*-
+    # %load_ext autoreload
+    %reload_ext autoreload
+    %autoreload 2
+#+END_SRC
+
+
+#+NAME: name
+#+BEGIN_SRC ein 
+  import os 
+  os.sys.executable,os.getcwd()
+#+END_SRC
+
+#+RESULTS: name
+:results:
+('/home/mlk/.pyenv/versions/3.8.2/envs/crypto/bin/python3.8',
+ '/home/mlk/Prog/Python/Crypto/kolaEnv/DataFetchers/getBitMEXData/Tests')
+:end:
+* codeget
+
+  #+BEGIN_SRC bash  -i
+ls data/Kraken/ADAUSD | head -n 2
+  #+END_SRC
+
+  #+RESULTS:
+  :results:
+  1538141100.csv
+  1538181260.csv
+  :end:
+  
+
+#+BEGIN_SRC ein
+  ts = 1539697106
+  from pandas import Timestamp
+  STRF = "%Y-%m-%dT%H_%M"
+
+  
+#+END_SRC
+  
+* imports
+
+* local_vars   
+Local Variables:
+ein:jupyter-default-notebook-directory: "/home/mlk/Python/Crypto/kolaEnv/DataFetchers/getBitMEXData/Tests/"
+End:
+  
