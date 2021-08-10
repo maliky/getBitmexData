@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-""" Fichier avec des fonctions pour récupérer les données historique de BitMex en ligne """
+""" 
+Get les données historique de BitMex en ligne
+Will update btxDatafile with latest data
+"""
+
 import argparse
 import subprocess as sp
 import logging
@@ -202,25 +206,30 @@ def main(fname: str, live: bool, prefix: str):
 def parse_args():
     """Parse arguments."""
     parser = argparse.ArgumentParser(
-        description="Utility to update btxDatafile with latest data"
+        description=__doc__,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    prefix_dft = "btx"
-    prefix_hlp = f"prefix in front of trade symbol (def. {prefix_dft})."
-    parser.add_argument("-p", "--prefix", default=prefix_dft, help=prefix_hlp)
-
-    fname_help = (
-        f"name of the file to update.  if None takes the latest"
-        " btxDatafile in current directory"
+    parser.add_argument(
+        "-p", "--prefix", default="prefix in front of trade symbol", help="btx"
     )
-    parser.add_argument("--fname", "-f", help=fname_help, default=None)
 
-    live_help = f"If present use live historic data"
-    parser.add_argument("--live", "-l", action="store_true", help=live_help)
+    parser.add_argument(
+        "--fname",
+        "-f",
+        help
+        == (
+            "name of the file to update.  if None takes the latest"
+            " btxDatafile in current directory"
+        ),
+        default=None,
+    )
 
-    logLevel_def = "INFO"
-    logLevel_help = f"Set logLevel (default {logLevel_def})"
-    parser.add_argument("--logLevel", "-L", help=logLevel_help, default=logLevel_def)
+    parser.add_argument(
+        "--live", "-l", action="store_true", help="If present use live historic data"
+    )
+
+    parser.add_argument("--logLevel", "-L", help=f"Set logLevel", default="INFO")
 
     return parser.parse_args()
 

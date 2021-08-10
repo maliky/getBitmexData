@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-A function to load in a dataFrame several files that where downloaded with getBitMEXData.main.
+A function to load in a dataFrame several files that were downloaded with getBitMEXData.main.
 The idea is that the folder contains yearly datafile.
 """
 
@@ -8,6 +8,7 @@ import pandas as pd
 from getBitMEXData.settings import FOLDER_DFT, SYMBOL_DFT, BINSIZE_DFT
 from getBitMEXData.btxConstantes import PRICE_TICKLOG
 from mlkHelper.stattimes import timedelta_to_seconds
+from pathlib import Path
 
 def load_btxData(years=[2018], bins=BINSIZE_DFT, folder=FOLDER_DFT, symbol=SYMBOL_DFT):
     """
