@@ -58,7 +58,7 @@ INSTRUMENT_PRICES = [
         "mark",
         "indicativeSettle",
     ]
-] + ["lastPriceProtected"]
+] + ["LastPriceProtected"]
 
 
 # price variation in % to reach to short to the maximun the tail (stop)

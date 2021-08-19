@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-main file getBitMEXData.
+An application to download bitmex's data with fine resolution. Default are in parentheses
 Pour charger les fichiers téléchargés utiliser btxDataLoader.py
 """
 from time import sleep
@@ -10,13 +10,12 @@ import argparse
 import logging
 import os
 import platform  # handle os check
-import time
 import sys
 import requests as rq
 from pandas import DataFrame, Timestamp, Timedelta
 from pathlib import Path
 
-from getBitMEXData.types import bucketT, oTimestampT, symbolT
+from getBitMEXData.btx_types import bucketT, oTimestampT, symbolT
 from getBitMEXData.settings import (
     STRF,
     LIVE_URL,
@@ -137,23 +136,25 @@ def get_bucketed_trades(
     Params:
     - Q : The Query requested.
     should be a dictionnary with keys binSize, partial, symbol, count and reverse.
-    - folder : the name of the file to write to the results to
+    - fout : the name of the file to write to the results to
     - pause : to throttle the requests and avoid been rejected by bitMEX
     - reverse : should we return earliest data first ?
     """
     assert Q or (binSize and symbol and reverse), (
-        f"Either Q is set or binSize, symb and reverse",
+        "Either Q is set or binSize, symb and reverse",
         f"but Q:{Q} or (binSize:{binSize} and symbol:{symbol} and reverse:{reverse})",
     )
     logger.debug(
-        f"Got {Q}, folder={folder}, startTime={startTime}, endTime={endTime},"
+        f"Got {Q}, folder={fout}, startTime={startTime}, endTime={endTime},"
         f" binSize={binSize}, pause={pause}"
     )
 
     # Init session and defaults settings
     auth = None  # auth = APIKeyAuthWithExpires(apiKey, apiSecret)
     sess = init_session()
-    fout = f"./{symbol}-{binSize}-{endTime.strftime(STRF)}.csv" if fout is None else fout
+    fout = (
+        f"./{symbol}-{binSize}-{endTime.strftime(STRF)}.csv" if fout is None else fout
+    )
     # prise en compte de windows
     fout = Path(fout)
 
@@ -269,49 +270,81 @@ def tz_enforced(timestamp_, timezone_):
 
 def parse_args():
     """Settings the applications's arguments and options."""
-    description = """An application to download bitmex's data with fine resolution. Default are in parentheses"""
-    folder_help = (
-        "folder to which we save the results. ({FOLDER_DFT}).  The file format is "
-        "<symbol>-<BINSIZE>-<LAST_RECORD_DATE>.csv"
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    count_help = "Max number of record per requests (COUNT_DFT)"
-    pause_help = (
-        "Minimun waiting time between 2 requests (PAUSE_DFT)."
-        "   Avoid overloading the server"
-    )
-    binSize_help = "Resolution bin size  (BINSIZE_DFT), can also be 1m, 5m, 1h."
-    startTime_help = (
-        "Start time of data collection (oldest available 2016-05-05"
-        " 04:00:00 'UTC').  Check time zones"
-    )
-    endTime_help = (
-        "End time of data collection.  ( now - 1 unit of chosen"
-        " resolution)-05-05 04:00:00 'UTC').  Check TZ"
-    )
-    logLevel_help = "set the log level (LOGLEVEL_DFT)"
-    live_help = "If present use LIVE keys else bitmex testnet."
-    entryPoint_help = (
-        "Set the path to append to the LIVE or TEST url before the query."
-        f" ({ENTRYPOINT_DFT})"
-    )
-    symbol_help = (
-        f"Symbol for which to get historical data ({SYMBOL_DFT}).  "
-        "Note: default start time may change depending on this"
-    )
-
-    parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("--folder", "-f", help=folder_help, default=FOLDER_DFT)
-    parser.add_argument("--count", "-c", type=int, help=count_help, default=COUNT_DFT)
-    parser.add_argument("--pause", "-p", type=float, help=pause_help, default=PAUSE_DFT)
-    parser.add_argument("--binSize", "-b", help=binSize_help, default=BINSIZE_DFT)
-    parser.add_argument("--startTime", "-s", help=startTime_help, default=STARTTIME_DFT)
-    parser.add_argument("--endTime", "-e", help=endTime_help, default=ENDTIME_DFT)
-    parser.add_argument("--live", "-l", action="store_true", help=live_help)
-    parser.add_argument("--logLevel", "-L", help=logLevel_help, default=LOGLEVEL_DFT)
     parser.add_argument(
-        "--entryPoint", "-E", help=entryPoint_help, default=ENTRYPOINT_DFT
+        "--folder",
+        "-f",
+        help=(
+            "folder to which we save the results.  The file format is "
+            "<symbol>-<BINSIZE>-<LAST_RECORD_DATE>.csv"
+        ),
+        default=FOLDER_DFT,
     )
-    parser.add_argument("--symbol", "-S", help=symbol_help, default=SYMBOL_DFT)
+    parser.add_argument(
+        "--count",
+        "-c",
+        type=int,
+        help="Max number of record per requests.",
+        default=COUNT_DFT,
+    )
+    parser.add_argument(
+        "--pause",
+        "-p",
+        type=float,
+        help=("Minimun waiting time between 2 requests. Avoid overloading the server"),
+        default=PAUSE_DFT,
+    )
+    parser.add_argument(
+        "--binSize",
+        "-b",
+        help="Resolution bin size, can also be 1m, 5m, 1h.",
+        default=BINSIZE_DFT,
+    )
+    parser.add_argument(
+        "--startTime",
+        "-s",
+        help=(
+            "Start time of data collection (oldest available 2016-05-05"
+            " 04:00:00 'UTC').  Check time zones"
+        ),
+        default=STARTTIME_DFT,
+    )
+    parser.add_argument(
+        "--endTime",
+        "-e",
+        help=(
+            "End time of data collection.  ( now - 1 unit of chosen"
+            " resolution)-05-05 04:00:00 'UTC').  Check TZ"
+        ),
+        default=ENDTIME_DFT,
+    )
+    parser.add_argument(
+        "--live",
+        "-l",
+        action="store_true",
+        help="If present use LIVE keys else bitmex testnet.",
+    )
+    parser.add_argument(
+        "--logLevel", "-L", help="set the log level", default=LOGLEVEL_DFT
+    )
+    parser.add_argument(
+        "--entryPoint",
+        "-E",
+        help=("Set the path to append to the LIVE or TEST url before the query."),
+        default=ENTRYPOINT_DFT,
+    )
+    parser.add_argument(
+        "--symbol",
+        "-S",
+        help=(
+            "Symbol for which to get historical data.  "
+            "Note: default start time may change depending on this"
+        ),
+        default=SYMBOL_DFT,
+    )
 
     return parser.parse_args()
 

@@ -24,7 +24,7 @@ time.tzset()
 # {"1m": "60s", "5m": "300s", "1h": "1H", "1d": "1D"}
 
 logger = logging.getLogger()
-STRF = "%Y-%m-%d %H:%M"  # default time format
+# STRF = "%Y-%m-%d %H:%M"  # default time format
 
 # Converts bitmex time unit to timestamp time units
 URLS = {
