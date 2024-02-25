@@ -1,5 +1,4 @@
 #+PROPERTY:  header-args :session ein-scrap  :exports both :results raw drawer :cache no
-Proie8$_lence
 * TODO
 ** Harmonisation des données Coingecko, Kraken et Bitmex
 - Se limiter à ohlv interpolé sur la minutes
